@@ -61,11 +61,15 @@ experience:
       - "멋쟁이사자처럼 교육생 및 운영진 활동 (2019)"
 
 education:
-  - school: "고려대학교 (세종)"
-    major: "컴퓨터융합소프트웨어학 주전공"
+  - type: "주전공"
+    primary: true
+    school: "고려대학교 (세종)"
+    major: "컴퓨터융합소프트웨어학"
     period: "2018 - 2023"
-  - school: "고려대학교 (서울)"
-    major: "인공지능학 복수전공"
+  - type: "복수전공"
+    primary: false
+    school: "고려대학교 (서울)"
+    major: "인공지능학"
     period: "2018 - 2023"
 
 skills:

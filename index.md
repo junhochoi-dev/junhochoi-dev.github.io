@@ -49,7 +49,10 @@ title: Home
 <ul class="cert-list edu-list">
 {% for edu in p.education %}
 <li>
-<span class="col-name"><strong>{{ edu.school }}</strong> · {{ edu.major }}</span>
+<span class="col-name edu-row">
+<span class="edu-badge {% if edu.primary %}edu-badge-primary{% else %}edu-badge-secondary{% endif %}">{{ edu.type }}</span>
+<strong>{{ edu.school }}</strong> · {{ edu.major }}
+</span>
 <span class="col-date">{{ edu.period }}</span>
 </li>
 {% endfor %}
