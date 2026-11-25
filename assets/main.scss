@@ -264,32 +264,72 @@ a:hover {
   line-height: 1.65;
 }
 
-/* Education Badges */
-.edu-row {
-  display: flex;
+/* Education Badges & 4-Column Grid */
+.edu-header {
+  display: grid;
+  grid-template-columns: 76px 200px 1fr 140px;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 2px solid #e5e5e5;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.edu-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edu-list li {
+  display: grid;
+  grid-template-columns: 76px 200px 1fr 140px;
+  gap: 1rem;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.55rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 0.92rem;
+  color: #262626;
+}
+
+.edu-list li:last-child {
+  border-bottom: none;
 }
 
 .edu-badge {
   display: inline-block;
-  padding: 0.18rem 0.6rem;
+  width: 68px;
+  text-align: center;
+  padding: 0.22rem 0;
   border-radius: 6px;
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  box-sizing: border-box;
 }
 
 .edu-badge-primary {
   background: #0a0a0a;
   color: #ffffff;
+  border: 1px solid #0a0a0a;
 }
 
 .edu-badge-secondary {
   background: #f5f5f5;
   color: #262626;
   border: 1px solid #d4d4d4;
+}
+
+.col-school {
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+.col-major {
+  color: #262626;
 }
 
 /* Pills & Lists */
@@ -310,27 +350,6 @@ a:hover {
   color: #171717;
   font-size: 0.82rem;
   font-weight: 600;
-}
-
-.cert-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.cert-list li {
-  padding: 0.55rem 0;
-  border-bottom: 1px solid #f5f5f5;
-  font-size: 0.92rem;
-  color: #262626;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.cert-list li:last-child {
-  border-bottom: none;
 }
 
 /* 3-Column Table Layout for Certifications & Awards */
@@ -495,9 +514,11 @@ a:hover {
   .two-col-grid {
     grid-template-columns: 1fr;
   }
+  .edu-header,
   .record-header {
     display: none;
   }
+  .edu-list li,
   .record-list li {
     grid-template-columns: 1fr;
     gap: 0.25rem;

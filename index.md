@@ -46,13 +46,18 @@ title: Home
 
 <div class="info-card stack-card">
 <h3 class="info-card-title">🎓 Education &amp; Skills</h3>
-<ul class="cert-list edu-list">
+<div class="edu-header">
+<span>구분</span>
+<span>학교</span>
+<span>학과</span>
+<span class="col-date">기간</span>
+</div>
+<ul class="edu-list">
 {% for edu in p.education %}
 <li>
-<span class="col-name edu-row">
-<span class="edu-badge {% if edu.primary %}edu-badge-primary{% else %}edu-badge-secondary{% endif %}">{{ edu.type }}</span>
-<strong>{{ edu.school }}</strong> · {{ edu.major }}
-</span>
+<span><span class="edu-badge {% if edu.primary %}edu-badge-primary{% else %}edu-badge-secondary{% endif %}">{{ edu.type }}</span></span>
+<span class="col-school">{{ edu.school }}</span>
+<span class="col-major">{{ edu.major }}</span>
 <span class="col-date">{{ edu.period }}</span>
 </li>
 {% endfor %}
