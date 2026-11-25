@@ -1,7 +1,7 @@
 ---
 ---
 
-$content-width: 1440px;
+$content-width: 1800px;
 
 @import "minima";
 
@@ -20,10 +20,12 @@ a:hover {
 }
 
 .wrapper {
-  max-width: $content-width;
-  width: 92%;
-  padding-right: 15px;
-  padding-left: 15px;
+  max-width: 1800px !important;
+  width: 94% !important;
+  margin-left: auto;
+  margin-right: auto;
+  padding-right: 16px;
+  padding-left: 16px;
 }
 
 .site-header {
@@ -73,7 +75,7 @@ a:hover {
 
 /* Hero Section (Monochrome) */
 .hero-section {
-  padding: 3.5rem 2.5rem;
+  padding: 3.5rem 2.75rem;
   margin-bottom: 2rem;
   border-radius: 14px;
   background: #0a0a0a;
@@ -103,7 +105,7 @@ a:hover {
 }
 
 .hero-subtitle {
-  max-width: 780px;
+  max-width: 960px;
   margin: 0 0 1.85rem 0;
   font-size: 1.05rem;
   line-height: 1.7;
@@ -306,7 +308,7 @@ a:hover {
 /* 3-Column Table Layout for Certifications & Awards */
 .record-header {
   display: grid;
-  grid-template-columns: 1fr 220px 150px;
+  grid-template-columns: 1fr 240px 160px;
   gap: 1rem;
   padding: 0.45rem 0;
   border-bottom: 2px solid #e5e5e5;
@@ -325,7 +327,7 @@ a:hover {
 
 .record-list li {
   display: grid;
-  grid-template-columns: 1fr 220px 150px;
+  grid-template-columns: 1fr 240px 160px;
   gap: 1rem;
   align-items: center;
   padding: 0.65rem 0;
@@ -453,7 +455,7 @@ a:hover {
 
 @media (max-width: 768px) {
   .wrapper {
-    width: 100%;
+    width: 100% !important;
   }
   .hero-section {
     padding: 2.25rem 1.5rem;
