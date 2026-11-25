@@ -7,6 +7,11 @@ baseurl: ""
 url: "https://junhochoi-dev.github.io"
 github_username: junhochoi-dev
 
+header_pages:
+  - index.md
+  - blog.md
+  - projects.md
+
 theme: minima
 plugins:
   - jekyll-feed
