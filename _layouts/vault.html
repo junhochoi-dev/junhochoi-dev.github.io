@@ -1,0 +1,236 @@
+---
+layout: default
+---
+<article class="post">
+  <header class="post-header">
+    <h1 class="post-title">{{ page.title | escape }}</h1>
+  </header>
+
+  <div id="vault-lock" class="vault-box">
+    <p class="vault-desc">🔒 이 공간의 게시물은 암호화되어 있습니다. 비밀번호를 입력해 주세요.</p>
+    <form id="vault-form" class="vault-form">
+      <input
+        type="password"
+        id="vault-password"
+        placeholder="비밀번호 입력"
+        autocomplete="current-password"
+        required
+      />
+      <button type="submit" id="vault-submit">잠금 해제</button>
+    </form>
+    <p id="vault-error" class="vault-error" hidden>비밀번호가 올바르지 않습니다.</p>
+  </div>
+
+  <div id="vault-unlocked" hidden>
+    <div class="vault-toolbar">
+      <span class="vault-status">🔓 잠금 해제됨</span>
+      <button type="button" id="vault-relock" class="vault-relock-btn">다시 잠그기</button>
+    </div>
+    <div id="vault-posts" class="vault-posts"></div>
+  </div>
+</article>
+
+<script id="vault-payload" type="text/plain">{{ page.encrypted_payload }}</script>
+
+<style>
+  .vault-box {
+    max-width: 440px;
+    margin: 2.5rem auto;
+    padding: 2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    text-align: center;
+  }
+  .vault-desc {
+    margin-bottom: 1.25rem;
+    color: #334155;
+    font-size: 0.95rem;
+  }
+  .vault-form {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .vault-form input {
+    flex: 1;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  .vault-form button {
+    padding: 0.6rem 1.1rem;
+    border: none;
+    border-radius: 6px;
+    background: #1e293b;
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .vault-form button:hover {
+    background: #334155;
+  }
+  .vault-error {
+    margin-top: 0.85rem;
+    margin-bottom: 0;
+    color: #dc2626;
+    font-size: 0.9rem;
+  }
+  .vault-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .vault-status {
+    font-size: 0.9rem;
+    color: #16a34a;
+    font-weight: 600;
+  }
+  .vault-relock-btn {
+    padding: 0.4rem 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #334155;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .vault-relock-btn:hover {
+    background: #f1f5f9;
+  }
+  .vault-card {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .vault-card-title {
+    margin: 0 0 0.35rem 0;
+    font-size: 1.35rem;
+  }
+  .vault-card-meta {
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  .vault-tag {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.78rem;
+  }
+</style>
+
+<script>
+(function () {
+  const lockBox = document.getElementById('vault-lock');
+  const unlockedBox = document.getElementById('vault-unlocked');
+  const form = document.getElementById('vault-form');
+  const pwInput = document.getElementById('vault-password');
+  const errorEl = document.getElementById('vault-error');
+  const postsEl = document.getElementById('vault-posts');
+  const relockBtn = document.getElementById('vault-relock');
+  const payloadB64 = document.getElementById('vault-payload').textContent.trim();
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) {
+      bytes[i] = bin.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  async function decryptPayload(password) {
+    const raw = b64ToBytes(payloadB64);
+    const salt = raw.slice(0, 16);
+    const iv = raw.slice(16, 28);
+    const dataWithTag = raw.slice(28);
+
+    const enc = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      enc.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveKey']
+    );
+    const key = await window.crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv },
+      key,
+      dataWithTag
+    );
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  }
+
+  function renderPosts(posts) {
+    postsEl.innerHTML = '';
+    posts.forEach(function (post) {
+      const card = document.createElement('section');
+      card.className = 'vault-card';
+
+      const title = document.createElement('h2');
+      title.className = 'vault-card-title';
+      title.textContent = post.title;
+      card.appendChild(title);
+
+      const meta = document.createElement('div');
+      meta.className = 'vault-card-meta';
+      meta.textContent = post.date || '';
+      if (Array.isArray(post.tags)) {
+        post.tags.forEach(function (tag) {
+          const span = document.createElement('span');
+          span.className = 'vault-tag';
+          span.textContent = '#' + tag;
+          meta.appendChild(span);
+        });
+      }
+      card.appendChild(meta);
+
+      const body = document.createElement('div');
+      body.className = 'vault-card-body';
+      body.innerHTML = post.content || '';
+      card.appendChild(body);
+
+      postsEl.appendChild(card);
+    });
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    errorEl.hidden = true;
+    try {
+      const posts = await decryptPayload(pwInput.value);
+      renderPosts(posts);
+      pwInput.value = '';
+      lockBox.hidden = true;
+      unlockedBox.hidden = false;
+    } catch (err) {
+      errorEl.hidden = false;
+      pwInput.select();
+    }
+  });
+
+  relockBtn.addEventListener('click', function () {
+    postsEl.innerHTML = '';
+    unlockedBox.hidden = true;
+    lockBox.hidden = false;
+    pwInput.value = '';
+    pwInput.focus();
+  });
+})();
+</script>
