@@ -74,7 +74,7 @@ a:hover {
 /* Hero Section (Monochrome) */
 .hero-section {
   padding: 3.5rem 2.5rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   border-radius: 14px;
   background: #0a0a0a;
   color: #fafafa;
@@ -151,7 +151,7 @@ a:hover {
 
 /* Sections & Cards */
 .section-heading {
-  margin: 2.5rem 0 1.15rem 0;
+  margin: 2rem 0 1rem 0;
   font-size: 1.3rem;
   font-weight: 800;
   color: #0a0a0a;
@@ -162,18 +162,18 @@ a:hover {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.25rem;
-  margin-bottom: 2.25rem;
+  margin-bottom: 2rem;
 }
 
 .two-col-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
-  margin-bottom: 2.25rem;
+  margin-bottom: 2rem;
 }
 
 .stack-card {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .info-card {
@@ -198,7 +198,7 @@ a:hover {
 }
 
 .info-card-title {
-  margin: 0 0 0.45rem 0;
+  margin: 0 0 0.75rem 0;
   font-size: 1.08rem;
   font-weight: 700;
   color: #0a0a0a;
@@ -216,7 +216,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 2.25rem;
+  margin-bottom: 2rem;
 }
 
 .timeline-item {
@@ -267,7 +267,7 @@ a:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 0.85rem 0 0 0;
+  margin: 1rem 0 0 0;
   padding: 0;
   list-style: none;
 }
@@ -282,39 +282,83 @@ a:hover {
   font-weight: 600;
 }
 
-.cert-list,
-.award-list {
-  margin: 0.5rem 0 0 0;
+.cert-list {
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.cert-list li,
-.award-list li {
-  padding: 0.5rem 0;
+.cert-list li {
+  padding: 0.55rem 0;
   border-bottom: 1px solid #f5f5f5;
-  font-size: 0.91rem;
+  font-size: 0.92rem;
   color: #262626;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
 }
 
-.cert-list li:last-child,
-.award-list li:last-child {
+.cert-list li:last-child {
   border-bottom: none;
 }
 
-.cert-list a {
+/* 3-Column Table Layout for Certifications & Awards */
+.record-header {
+  display: grid;
+  grid-template-columns: 1fr 220px 150px;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 2px solid #e5e5e5;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.record-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.record-list li {
+  display: grid;
+  grid-template-columns: 1fr 220px 150px;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 0.92rem;
+  color: #262626;
+}
+
+.record-list li:last-child {
+  border-bottom: none;
+}
+
+.col-name {
+  font-weight: 500;
+  color: #0a0a0a;
+}
+
+.col-name a {
   color: #0a0a0a;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.cert-meta {
+.col-issuer {
+  color: #525252;
+  font-size: 0.88rem;
+}
+
+.col-date {
   color: #737373;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  text-align: right;
   white-space: nowrap;
 }
 
@@ -382,7 +426,7 @@ a:hover {
   align-items: center;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   border-radius: 12px;
   background: #fafafa;
   border: 1px solid #e5e5e5;
@@ -420,5 +464,15 @@ a:hover {
   .card-grid,
   .two-col-grid {
     grid-template-columns: 1fr;
+  }
+  .record-header {
+    display: none;
+  }
+  .record-list li {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  .col-date {
+    text-align: left;
   }
 }

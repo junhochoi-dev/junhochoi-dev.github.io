@@ -46,9 +46,12 @@ title: Home
 
 <div class="info-card stack-card">
 <h3 class="info-card-title">🎓 Education &amp; Skills</h3>
-<ul class="cert-list">
+<ul class="cert-list edu-list">
 {% for edu in p.education %}
-<li><span><strong>{{ edu.school }}</strong> · {{ edu.major }}</span><span class="cert-meta">{{ edu.period }}</span></li>
+<li>
+<span class="col-name"><strong>{{ edu.school }}</strong> · {{ edu.major }}</span>
+<span class="col-date">{{ edu.period }}</span>
+</li>
 {% endfor %}
 </ul>
 <ul class="badge-list">
@@ -60,15 +63,23 @@ title: Home
 
 <div class="info-card stack-card">
 <h3 class="info-card-title">📜 Licenses &amp; Certifications</h3>
-<ul class="cert-list">
+<div class="record-header">
+<span>자격증</span>
+<span>발급기관</span>
+<span class="col-date">취득일자</span>
+</div>
+<ul class="record-list">
 {% for cert in p.certifications %}
 <li>
+<span class="col-name">
 {% if cert.url %}
 <a href="{{ cert.url }}" target="_blank" rel="noopener">{{ cert.name }}</a>
 {% else %}
-<span>{{ cert.name }}</span>
+{{ cert.name }}
 {% endif %}
-<span class="cert-meta">{{ cert.meta }}</span>
+</span>
+<span class="col-issuer">{{ cert.issuer }}</span>
+<span class="col-date">{{ cert.date }}</span>
 </li>
 {% endfor %}
 </ul>
@@ -76,9 +87,18 @@ title: Home
 
 <div class="info-card stack-card">
 <h3 class="info-card-title">🏆 Honors &amp; Awards</h3>
-<ul class="award-list">
+<div class="record-header">
+<span>수상 내역</span>
+<span>수여기관</span>
+<span class="col-date">수상일자</span>
+</div>
+<ul class="record-list">
 {% for award in p.awards %}
-<li><span>{{ award.title }}</span><span class="cert-meta">{{ award.meta }}</span></li>
+<li>
+<span class="col-name">{{ award.title }}</span>
+<span class="col-issuer">{{ award.issuer }}</span>
+<span class="col-date">{{ award.date }}</span>
+</li>
 {% endfor %}
 </ul>
 </div>
