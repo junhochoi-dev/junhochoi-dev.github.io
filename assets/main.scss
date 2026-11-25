@@ -1,0 +1,11 @@
+---
+---
+
+$content-width: 1140px;
+
+@import "minima";
+
+.wrapper {
+  max-width: -webkit-calc(#{$content-width} - (#{$spacing-unit} * 2));
+  max-width: calc(#{$content-width} - (#{$spacing-unit} * 2));
+}
