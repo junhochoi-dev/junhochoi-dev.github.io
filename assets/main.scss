@@ -264,10 +264,11 @@ a:hover {
   line-height: 1.65;
 }
 
-/* Education Badges & 4-Column Grid */
-.edu-header {
+/* Education & ToDo 4-Column Grid */
+.edu-header,
+.todo-header {
   display: grid;
-  grid-template-columns: 76px 200px 1fr 140px;
+  grid-template-columns: 76px 220px 1fr 140px;
   gap: 1rem;
   padding: 0.45rem 0;
   border-bottom: 2px solid #e5e5e5;
@@ -278,15 +279,21 @@ a:hover {
   letter-spacing: 0.03em;
 }
 
-.edu-list {
+.todo-header {
+  grid-template-columns: 76px 1fr 140px 120px;
+}
+
+.edu-list,
+.todo-list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.edu-list li {
+.edu-list li,
+.todo-list li {
   display: grid;
-  grid-template-columns: 76px 200px 1fr 140px;
+  grid-template-columns: 76px 220px 1fr 140px;
   gap: 1rem;
   align-items: center;
   padding: 0.65rem 0;
@@ -295,8 +302,18 @@ a:hover {
   color: #262626;
 }
 
-.edu-list li:last-child {
+.todo-list li {
+  grid-template-columns: 76px 1fr 140px 120px;
+}
+
+.edu-list li:last-child,
+.todo-list li:last-child {
   border-bottom: none;
+}
+
+.todo-done .todo-title {
+  text-decoration: line-through;
+  color: #737373;
 }
 
 .edu-badge {
@@ -315,6 +332,12 @@ a:hover {
   background: #0a0a0a;
   color: #ffffff;
   border: 1px solid #0a0a0a;
+}
+
+.edu-badge-doing {
+  background: #404040;
+  color: #ffffff;
+  border: 1px solid #404040;
 }
 
 .edu-badge-secondary {
@@ -515,10 +538,12 @@ a:hover {
     grid-template-columns: 1fr;
   }
   .edu-header,
+  .todo-header,
   .record-header {
     display: none;
   }
   .edu-list li,
+  .todo-list li,
   .record-list li {
     grid-template-columns: 1fr;
     gap: 0.25rem;

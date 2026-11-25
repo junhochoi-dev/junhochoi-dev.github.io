@@ -63,12 +63,12 @@ experience:
 education:
   - type: "주전공"
     primary: true
-    school: "고려대학교 (세종)"
+    school: "고려대학교 세종캠퍼스"
     major: "컴퓨터융합소프트웨어학"
     period: "2018 - 2023"
   - type: "복수전공"
     primary: false
-    school: "고려대학교 (서울)"
+    school: "고려대학교 서울캠퍼스"
     major: "인공지능학"
     period: "2018 - 2023"
 

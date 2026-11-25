@@ -1,0 +1,10 @@
+- date: "2026.11.26"
+  title: "GitHub Pages 포트폴리오 & 블로그 구축"
+  tags:
+    - "Jekyll"
+    - "GitHub Pages"
+    - "Vault"
+  items:
+    - "junhochoi-dev.github.io 개인 기술 블로그 및 포트폴리오 오픈"
+    - "YAML(_data/*.yml) 기반 프로필·프로젝트·Toy 데이터 분리"
+    - "AES-256-GCM 암호화 3단 뎁스 Vault 구현"

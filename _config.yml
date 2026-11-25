@@ -12,6 +12,8 @@ header_pages:
   - blog.md
   - projects.md
   - toy.md
+  - dailylog.md
+  - todo.md
   - vault.md
 
 theme: minima
