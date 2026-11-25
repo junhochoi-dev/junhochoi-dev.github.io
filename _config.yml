@@ -1,0 +1,13 @@
+title: Junho's Dev Blog
+author: Junho Choi
+email: cjh970422@gmail.com
+description: >-
+  개발 공부와 경험을 기록하는 기술 블로그입니다.
+baseurl: ""
+url: "https://junhochoi-dev.github.io"
+github_username: junhochoi-dev
+
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
