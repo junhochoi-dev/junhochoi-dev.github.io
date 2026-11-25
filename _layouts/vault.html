@@ -27,6 +27,7 @@ layout: default
     <span class="vault-status">🔓 잠금 해제됨</span>
     <button type="button" id="vault-relock" class="vault-relock-btn">다시 잠그기</button>
   </div>
+  <div id="vault-tabs" class="vault-tabs"></div>
   <div id="vault-posts" class="vault-posts"></div>
 </div>
 
@@ -84,7 +85,7 @@ layout: default
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #e5e5e5;
   }
@@ -107,13 +108,49 @@ layout: default
     background: #f5f5f5;
     border-color: #0a0a0a;
   }
+  .vault-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-bottom: 1.5rem;
+  }
+  .vault-tab-btn {
+    padding: 0.45rem 0.95rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #525252;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .vault-tab-btn:hover {
+    border-color: #0a0a0a;
+    color: #0a0a0a;
+  }
+  .vault-tab-btn.active {
+    background: #0a0a0a;
+    border-color: #0a0a0a;
+    color: #ffffff;
+  }
   .vault-card {
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     border: 1px solid #e5e5e5;
     border-left: 4px solid #0a0a0a;
     border-radius: 10px;
     background: #ffffff;
+  }
+  .vault-card-cat {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    padding: 0.18rem 0.6rem;
+    border-radius: 999px;
+    background: #0a0a0a;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 600;
   }
   .vault-card-title {
     margin: 0 0 0.35rem 0;
@@ -146,9 +183,13 @@ layout: default
   const form = document.getElementById('vault-form');
   const pwInput = document.getElementById('vault-password');
   const errorEl = document.getElementById('vault-error');
+  const tabsEl = document.getElementById('vault-tabs');
   const postsEl = document.getElementById('vault-posts');
   const relockBtn = document.getElementById('vault-relock');
   const payloadB64 = document.getElementById('vault-payload').textContent.trim();
+
+  let allPosts = [];
+  let activeCategory = 'All';
 
   function b64ToBytes(b64) {
     const bin = atob(b64);
@@ -188,11 +229,50 @@ layout: default
     return JSON.parse(new TextDecoder().decode(decrypted));
   }
 
-  function renderPosts(posts) {
+  function renderTabs() {
+    tabsEl.innerHTML = '';
+    const counts = { All: allPosts.length };
+    const categories = ['All'];
+
+    allPosts.forEach(function (post) {
+      const cat = post.category || 'General';
+      if (!counts[cat]) {
+        counts[cat] = 0;
+        categories.push(cat);
+      }
+      counts[cat] += 1;
+    });
+
+    categories.forEach(function (cat) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'vault-tab-btn' + (activeCategory === cat ? ' active' : '');
+      btn.textContent = cat + ' (' + counts[cat] + ')';
+      btn.addEventListener('click', function () {
+        activeCategory = cat;
+        renderTabs();
+        renderPosts();
+      });
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  function renderPosts() {
     postsEl.innerHTML = '';
-    posts.forEach(function (post) {
+    const filtered = activeCategory === 'All'
+      ? allPosts
+      : allPosts.filter(function (p) { return (p.category || 'General') === activeCategory; });
+
+    filtered.forEach(function (post) {
       const card = document.createElement('section');
       card.className = 'vault-card';
+
+      if (post.category) {
+        const catBadge = document.createElement('span');
+        catBadge.className = 'vault-card-cat';
+        catBadge.textContent = post.category;
+        card.appendChild(catBadge);
+      }
 
       const title = document.createElement('h2');
       title.className = 'vault-card-title';
@@ -225,8 +305,10 @@ layout: default
     e.preventDefault();
     errorEl.hidden = true;
     try {
-      const posts = await decryptPayload(pwInput.value);
-      renderPosts(posts);
+      allPosts = await decryptPayload(pwInput.value);
+      activeCategory = 'All';
+      renderTabs();
+      renderPosts();
       pwInput.value = '';
       lockBox.hidden = true;
       unlockedBox.hidden = false;
@@ -237,6 +319,8 @@ layout: default
   });
 
   relockBtn.addEventListener('click', function () {
+    allPosts = [];
+    tabsEl.innerHTML = '';
     postsEl.innerHTML = '';
     unlockedBox.hidden = true;
     lockBox.hidden = false;
