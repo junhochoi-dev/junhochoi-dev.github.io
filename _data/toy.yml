@@ -1,0 +1,11 @@
+- title: "junhochoi-dev.github.io"
+  tag: "Jekyll · GitHub Pages"
+  desc: "YAML 데이터 기반 포트폴리오, 기술 블로그, AES-256-GCM 암호화 Vault를 결합한 개인 웹사이트입니다."
+  url: "https://github.com/junhochoi-dev/junhochoi-dev.github.io"
+  url_label: "GitHub 저장소 →"
+
+- title: "Algorithm Archive"
+  tag: "PS · C++ / Python"
+  desc: "백준, 삼성SW역량테스트 등 알고리즘 문제 풀이와 자료구조 구현을 정리한 저장소입니다."
+  url: "https://github.com/junhochoi-dev/algorithm"
+  url_label: "GitHub 저장소 →"

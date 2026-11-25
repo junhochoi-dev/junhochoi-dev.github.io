@@ -5,39 +5,88 @@ $content-width: 1140px;
 
 @import "minima";
 
+body {
+  background-color: #ffffff;
+  color: #171717;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: #111111;
+}
+
+a:hover {
+  color: #525252;
+}
+
 .wrapper {
   max-width: -webkit-calc(#{$content-width} - (#{$spacing-unit} * 2));
   max-width: calc(#{$content-width} - (#{$spacing-unit} * 2));
 }
 
 .site-header {
-  border-top: 3px solid #0f172a;
-  border-bottom: 1px solid #e2e8f0;
+  border-top: 3px solid #0a0a0a;
+  border-bottom: 1px solid #e5e5e5;
   background-color: #ffffff;
 }
 
 .site-title {
   font-weight: 800 !important;
-  letter-spacing: 0.08em;
-  color: #0f172a !important;
+  letter-spacing: 0.1em;
+  color: #0a0a0a !important;
 }
 
+.site-nav .page-link {
+  color: #404040;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.site-nav .page-link:hover {
+  color: #0a0a0a;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* Page Header */
+.page-banner {
+  padding: 2rem 0 1.5rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.page-banner-title {
+  margin: 0 0 0.45rem 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0a0a0a;
+}
+
+.page-banner-desc {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #525252;
+}
+
+/* Hero Section (Monochrome) */
 .hero-section {
   padding: 3.5rem 2.5rem;
   margin-bottom: 2.5rem;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #334155 100%);
-  color: #f8fafc;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  background: #0a0a0a;
+  color: #fafafa;
+  border: 1px solid #171717;
 }
 
 .hero-badge {
   display: inline-block;
   padding: 0.35rem 0.85rem;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.15rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #93c5fd;
+  background: #1f1f1f;
+  border: 1px solid #333333;
+  color: #e5e5e5;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -45,7 +94,7 @@ $content-width: 1140px;
 
 .hero-title {
   margin: 0 0 0.85rem 0;
-  font-size: 2.4rem;
+  font-size: 2.35rem;
   font-weight: 800;
   line-height: 1.25;
   color: #ffffff;
@@ -54,9 +103,9 @@ $content-width: 1140px;
 .hero-subtitle {
   max-width: 720px;
   margin: 0 0 1.85rem 0;
-  font-size: 1.06rem;
+  font-size: 1.05rem;
   line-height: 1.7;
-  color: #cbd5e1;
+  color: #d4d4d4;
 }
 
 .hero-actions {
@@ -73,35 +122,37 @@ $content-width: 1140px;
   font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none !important;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-primary {
-  background-color: #3b82f6;
-  color: #ffffff !important;
+  background-color: #ffffff;
+  color: #0a0a0a !important;
 }
 
 .btn-primary:hover {
-  background-color: #2563eb;
+  background-color: #e5e5e5;
   transform: translateY(-2px);
 }
 
 .btn-secondary {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #f8fafc !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #171717;
+  color: #fafafa !important;
+  border: 1px solid #404040;
 }
 
 .btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.18);
+  background-color: #262626;
+  border-color: #737373;
   transform: translateY(-2px);
 }
 
+/* Sections & Cards */
 .section-heading {
   margin: 2.5rem 0 1.15rem 0;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #0a0a0a;
   letter-spacing: -0.01em;
 }
 
@@ -122,7 +173,7 @@ $content-width: 1140px;
 .info-card {
   display: block;
   padding: 1.5rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e5e5;
   border-radius: 12px;
   background: #ffffff;
   text-decoration: none !important;
@@ -130,30 +181,31 @@ $content-width: 1140px;
 }
 
 .info-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
-  border-color: #94a3b8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  border-color: #0a0a0a;
 }
 
 .info-card-icon {
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   margin-bottom: 0.65rem;
 }
 
 .info-card-title {
   margin: 0 0 0.45rem 0;
-  font-size: 1.1rem;
+  font-size: 1.08rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #0a0a0a;
 }
 
 .info-card-desc {
   margin: 0;
   font-size: 0.92rem;
   line-height: 1.6;
-  color: #475569;
+  color: #525252;
 }
 
+/* Timeline */
 .timeline {
   display: flex;
   flex-direction: column;
@@ -163,8 +215,8 @@ $content-width: 1140px;
 
 .timeline-item {
   padding: 1.35rem 1.5rem;
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #0f172a;
+  border: 1px solid #e5e5e5;
+  border-left: 4px solid #0a0a0a;
   border-radius: 10px;
   background: #ffffff;
 }
@@ -180,46 +232,47 @@ $content-width: 1140px;
 
 .timeline-role {
   margin: 0;
-  font-size: 1.08rem;
+  font-size: 1.06rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #0a0a0a;
 }
 
 .timeline-org {
   font-weight: 600;
-  color: #2563eb;
+  color: #525252;
 }
 
 .timeline-date {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #64748b;
+  color: #737373;
 }
 
 .timeline-list {
   margin: 0.5rem 0 0 1.15rem;
   padding: 0;
-  color: #475569;
+  color: #404040;
   font-size: 0.92rem;
   line-height: 1.65;
 }
 
+/* Pills & Lists */
 .badge-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
-  margin: 0.75rem 0 0 0;
+  gap: 0.5rem;
+  margin: 0.85rem 0 0 0;
   padding: 0;
   list-style: none;
 }
 
 .skill-pill {
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.72rem;
   border-radius: 999px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #1e293b;
-  font-size: 0.84rem;
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  color: #171717;
+  font-size: 0.82rem;
   font-weight: 600;
 }
 
@@ -232,10 +285,10 @@ $content-width: 1140px;
 
 .cert-list li,
 .award-list li {
-  padding: 0.48rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f5f5f5;
   font-size: 0.91rem;
-  color: #334155;
+  color: #262626;
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
@@ -246,12 +299,76 @@ $content-width: 1140px;
   border-bottom: none;
 }
 
+.cert-list a {
+  color: #0a0a0a;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .cert-meta {
-  color: #64748b;
+  color: #737373;
   font-size: 0.82rem;
   white-space: nowrap;
 }
 
+/* Blog List Cards */
+.blog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.blog-card {
+  display: block;
+  padding: 1.4rem 1.6rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #ffffff;
+  text-decoration: none !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.blog-card:hover {
+  transform: translateY(-2px);
+  border-color: #0a0a0a;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.blog-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.84rem;
+  color: #737373;
+}
+
+.blog-card-title {
+  margin: 0 0 0.45rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+.blog-card-excerpt {
+  margin: 0;
+  font-size: 0.93rem;
+  line-height: 1.6;
+  color: #525252;
+}
+
+/* Toy Link */
+.card-link-label {
+  display: inline-block;
+  margin-top: 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+/* Contact Strip */
 .contact-strip {
   display: flex;
   flex-wrap: wrap;
@@ -261,9 +378,9 @@ $content-width: 1140px;
   padding: 1.25rem 1.5rem;
   margin-top: 2rem;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #334155;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  color: #262626;
   font-size: 0.95rem;
 }
 
@@ -274,13 +391,14 @@ $content-width: 1140px;
 }
 
 .contact-links a {
-  font-weight: 600;
-  color: #2563eb;
+  font-weight: 700;
+  color: #0a0a0a;
   text-decoration: none;
+  border-bottom: 1px solid #d4d4d4;
 }
 
 .contact-links a:hover {
-  text-decoration: underline;
+  border-bottom-color: #0a0a0a;
 }
 
 @media (max-width: 768px) {
