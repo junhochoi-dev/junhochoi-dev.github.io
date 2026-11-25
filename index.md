@@ -44,8 +44,7 @@ title: Home
 {% endfor %}
 </div>
 
-<div class="two-col-grid">
-<div class="info-card">
+<div class="info-card stack-card">
 <h3 class="info-card-title">🎓 Education &amp; Skills</h3>
 <ul class="cert-list">
 {% for edu in p.education %}
@@ -59,7 +58,7 @@ title: Home
 </ul>
 </div>
 
-<div class="info-card">
+<div class="info-card stack-card">
 <h3 class="info-card-title">📜 Licenses &amp; Certifications</h3>
 <ul class="cert-list">
 {% for cert in p.certifications %}
@@ -74,9 +73,8 @@ title: Home
 {% endfor %}
 </ul>
 </div>
-</div>
 
-<div class="info-card">
+<div class="info-card stack-card">
 <h3 class="info-card-title">🏆 Honors &amp; Awards</h3>
 <ul class="award-list">
 {% for award in p.awards %}

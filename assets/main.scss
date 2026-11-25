@@ -1,7 +1,7 @@
 ---
 ---
 
-$content-width: 1140px;
+$content-width: 1440px;
 
 @import "minima";
 
@@ -20,8 +20,10 @@ a:hover {
 }
 
 .wrapper {
-  max-width: -webkit-calc(#{$content-width} - (#{$spacing-unit} * 2));
-  max-width: calc(#{$content-width} - (#{$spacing-unit} * 2));
+  max-width: $content-width;
+  width: 92%;
+  padding-right: 15px;
+  padding-left: 15px;
 }
 
 .site-header {
@@ -101,7 +103,7 @@ a:hover {
 }
 
 .hero-subtitle {
-  max-width: 720px;
+  max-width: 780px;
   margin: 0 0 1.85rem 0;
   font-size: 1.05rem;
   line-height: 1.7;
@@ -168,6 +170,10 @@ a:hover {
   grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
   margin-bottom: 2.25rem;
+}
+
+.stack-card {
+  margin-bottom: 1.25rem;
 }
 
 .info-card {
@@ -402,6 +408,9 @@ a:hover {
 }
 
 @media (max-width: 768px) {
+  .wrapper {
+    width: 100%;
+  }
   .hero-section {
     padding: 2.25rem 1.5rem;
   }
