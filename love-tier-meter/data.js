@@ -49,6 +49,13 @@ const QUESTIONS = [
     type: 'profile'
   },
   {
+    id: 'body',
+    stepTitle: '신체 조건',
+    title: '키와 몸무게를 알려주세요',
+    desc: '성별 기준 키와 BMI 균형도를 피지컬 지표에 반영합니다.',
+    type: 'body'
+  },
+  {
     id: 'education',
     stepTitle: '학력',
     title: '최종 학력을 알려주세요',

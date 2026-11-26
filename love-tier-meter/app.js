@@ -7,6 +7,8 @@ const state = {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
+    heightCm: '',
+    weightKg: '',
     educationDegree: null,
     educationTier: null,
     employmentType: null,
@@ -101,6 +103,11 @@ function renderQuestion() {
 
   if (q.type === 'profile') {
     renderProfileStep(q);
+    return;
+  }
+
+  if (q.type === 'body') {
+    renderBodyStep(q);
     return;
   }
 
@@ -291,6 +298,83 @@ function renderProfileStep(q) {
     const check = validateBirthdate(yearEl.value.trim(), monthEl.value.trim(), dayEl.value.trim());
     if (!check.valid) {
       errorEl.textContent = check.msg;
+      return;
+    }
+    goNextStep();
+  });
+}
+
+function getBmiCategory(bmi) {
+  if (bmi < 18.5) return '저체중';
+  if (bmi < 23) return '표준';
+  if (bmi < 25) return '과체중 전단계';
+  if (bmi < 30) return '과체중';
+  return '고도비만';
+}
+
+function renderBodyStep(q) {
+  const { heightCm, weightKg } = state.answers;
+  quizBody.innerHTML = `
+    <span class="q-step-badge">${q.stepTitle}</span>
+    <h2 class="q-title">${q.title}</h2>
+    <p class="q-desc">${q.desc}</p>
+    <div class="profile-form">
+      <div class="body-grid">
+        <div>
+          <span class="field-label">키</span>
+          <div class="salary-input-wrap">
+            <input id="input-height" class="salary-input" type="number" inputmode="decimal" placeholder="175" value="${heightCm}" />
+            <span class="salary-unit">cm</span>
+          </div>
+        </div>
+        <div>
+          <span class="field-label">몸무게</span>
+          <div class="salary-input-wrap">
+            <input id="input-weight" class="salary-input" type="number" inputmode="decimal" placeholder="68" value="${weightKg}" />
+            <span class="salary-unit">kg</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="body-preview" class="age-preview" style="display:none;"></div>
+      <div id="body-error" class="error-msg"></div>
+
+      <button type="button" id="btn-body-next" class="btn-primary">다음 문항으로</button>
+    </div>
+  `;
+
+  const heightEl = document.getElementById('input-height');
+  const weightEl = document.getElementById('input-weight');
+  const previewEl = document.getElementById('body-preview');
+  const errorEl = document.getElementById('body-error');
+
+  function updateBodyPreview() {
+    state.answers.heightCm = heightEl.value.trim();
+    state.answers.weightKg = weightEl.value.trim();
+    const h = Number(state.answers.heightCm);
+    const w = Number(state.answers.weightKg);
+    if (h >= 120 && h <= 230 && w >= 30 && w <= 220) {
+      const bmi = w / ((h / 100) * (h / 100));
+      previewEl.style.display = 'block';
+      previewEl.textContent = `${h}cm · ${w}kg (BMI ${bmi.toFixed(1)} · ${getBmiCategory(bmi)})`;
+      errorEl.textContent = '';
+    } else {
+      previewEl.style.display = 'none';
+    }
+  }
+
+  [heightEl, weightEl].forEach((input) => input.addEventListener('input', updateBodyPreview));
+  updateBodyPreview();
+
+  document.getElementById('btn-body-next').addEventListener('click', () => {
+    const h = Number(heightEl.value.trim());
+    const w = Number(weightEl.value.trim());
+    if (!heightEl.value.trim() || Number.isNaN(h) || h < 120 || h > 230) {
+      errorEl.textContent = '키는 120~230cm 사이로 입력해 주세요.';
+      return;
+    }
+    if (!weightEl.value.trim() || Number.isNaN(w) || w < 30 || w > 220) {
+      errorEl.textContent = '몸무게는 30~220kg 사이로 입력해 주세요.';
       return;
     }
     goNextStep();
@@ -525,6 +609,8 @@ function evaluateResult() {
     birthYear,
     birthMonth,
     birthDay,
+    heightCm,
+    weightKg,
     educationDegree,
     educationTier,
     employmentType,
@@ -537,6 +623,32 @@ function evaluateResult() {
     standard
   } = state.answers;
   const { age, zodiac } = calculateAgeAndZodiac(Number(birthYear), Number(birthMonth), Number(birthDay));
+
+  const h = Number(heightCm);
+  const w = Number(weightKg);
+  const bmi = w / ((h / 100) * (h / 100));
+
+  let heightSpec = 4;
+  let heightAppeal = 3;
+  if (gender === 'male') {
+    if (h >= 178) { heightSpec = 8; heightAppeal = 6; }
+    else if (h >= 174) { heightSpec = 6; heightAppeal = 5; }
+    else if (h >= 170) { heightSpec = 4; heightAppeal = 3; }
+    else { heightSpec = 1; heightAppeal = 1; }
+  } else {
+    if (h >= 160 && h <= 168) { heightSpec = 8; heightAppeal = 6; }
+    else if ((h >= 155 && h < 160) || (h > 168 && h <= 173)) { heightSpec = 6; heightAppeal = 4; }
+    else { heightSpec = 4; heightAppeal = 3; }
+  }
+
+  let bmiSpec = 2;
+  let bmiAppeal = 1;
+  if (bmi >= 18.5 && bmi <= 23.9) { bmiSpec = 6; bmiAppeal = 5; }
+  else if ((bmi >= 24.0 && bmi <= 25.9) || (bmi >= 17.5 && bmi < 18.5)) { bmiSpec = 4; bmiAppeal = 3; }
+  else if (bmi >= 29.0) { bmiSpec = 0; bmiAppeal = -1; }
+
+  const bodySpec = heightSpec + bmiSpec;
+  const bodyAppeal = heightAppeal + bmiAppeal;
 
   const eduQ = getQuestionById('education');
   const degOpt = eduQ.degreeOptions[educationDegree];
@@ -583,9 +695,9 @@ function evaluateResult() {
     else ageScore = 6;
   }
 
-  // 2) 현실 스펙 (학력 + 고용형태 + 연봉 + 주거 + 외모일부 + 나이) -> 100점 환산
-  const rawSpec = eduSpec + empOpt.spec + salarySpec + housingOpt.spec + appOpt.spec + ageScore; // max ~96
-  const specPercent = Math.min(100, Math.round((rawSpec / 96) * 100));
+  // 2) 현실 스펙 (피지컬 + 학력 + 고용형태 + 연봉 + 주거 + 외모일부 + 나이) -> 100점 환산
+  const rawSpec = bodySpec + eduSpec + empOpt.spec + salarySpec + housingOpt.spec + appOpt.spec + ageScore; // max ~110
+  const specPercent = Math.min(100, Math.round((rawSpec / 110) * 100));
 
   // 3) 연애 성향 (소비관 + 소통) -> 100점 환산
   const rawLove = spendOpt.love + commOpt.love; // max 34
@@ -602,8 +714,8 @@ function evaluateResult() {
   });
 
   // 5) 시장 호감도 -> 100점 환산
-  const rawAppeal = eduAppeal + empOpt.appeal + salaryAppeal + housingOpt.appeal + appOpt.appeal + spendOpt.appeal + commOpt.appeal - hurdlePenalty * 0.8;
-  const appealPercent = Math.max(10, Math.min(100, Math.round(((rawAppeal + 6) / 64) * 100)));
+  const rawAppeal = bodyAppeal + eduAppeal + empOpt.appeal + salaryAppeal + housingOpt.appeal + appOpt.appeal + spendOpt.appeal + commOpt.appeal - hurdlePenalty * 0.8;
+  const appealPercent = Math.max(10, Math.min(100, Math.round(((rawAppeal + 6) / 75) * 100)));
 
   // 6) 메타인지(눈높이 균형) -> 100점 환산
   let eyePenalty = 0;
@@ -640,7 +752,7 @@ function evaluateResult() {
     hurdleTags,
     eyePenalty,
     metrics: [
-      { label: '현실 스펙 (학력·직업·자산·연령)', score: specPercent },
+      { label: '현실 스펙 (피지컬·학력·직업·자산)', score: specPercent },
       { label: '연애 성향 (경제관·소통)', score: lovePercent },
       { label: '시장 호감도 (매력·유연함)', score: appealPercent },
       { label: '메타인지 (눈높이 균형)', score: metaPercent }
@@ -817,6 +929,8 @@ document.getElementById('btn-retry').addEventListener('click', () => {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
+    heightCm: '',
+    weightKg: '',
     educationDegree: null,
     educationTier: null,
     employmentType: null,

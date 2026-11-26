@@ -371,6 +371,12 @@ body {
   gap: 8px;
 }
 
+.body-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .birth-input-wrap {
   position: relative;
 }
