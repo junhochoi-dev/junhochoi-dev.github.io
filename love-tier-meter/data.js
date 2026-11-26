@@ -83,9 +83,25 @@ const QUESTIONS = [
     id: 'profile',
     stepTitle: '기본 프로필',
     askTopic: '기본 프로필',
-    title: '성별과 출생 정보, 성향·거주지를 알려주세요',
-    desc: '만 나이·연 나이와 12지신, 실시간 인생 카운터, 혈액형·MBTI를 반영합니다.',
+    title: '성별과 생년월일·출생 시간을 알려주세요',
+    desc: '만 나이·연 나이와 12지신, 실시간 인생 카운터를 계산합니다.',
     type: 'profile'
+  },
+  {
+    id: 'personality',
+    stepTitle: '혈액형 · MBTI',
+    askTopic: '혈액형 · MBTI',
+    title: '혈액형과 MBTI를 선택해 주세요',
+    desc: '성격 궁합 참고를 위해 혈액형과 4가지 MBTI 성향을 선택합니다.',
+    type: 'personality'
+  },
+  {
+    id: 'region',
+    stepTitle: '현재 거주 지역',
+    askTopic: '현재 거주 지역',
+    title: '현재 거주 중인 시·도와 시·군·구를 선택해 주세요',
+    desc: '선택한 지역이 아래 지도에서 바로 표시됩니다.',
+    type: 'region'
   },
   {
     id: 'body',
