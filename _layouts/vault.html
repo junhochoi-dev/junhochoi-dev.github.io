@@ -29,7 +29,7 @@ layout: default
   </div>
   <div class="vault-layout">
     <aside class="vault-sidebar">
-      <div class="vault-sidebar-title">Explorer</div>
+      <div class="vault-sidebar-title">Posts Tree</div>
       <div id="vault-tree" class="vault-tree"></div>
     </aside>
     <main id="vault-main" class="vault-main"></main>
@@ -100,13 +100,28 @@ layout: default
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     font-size: 0.9rem;
     color: #737373;
+  }
+  .vault-crumb-btn {
+    padding: 0.2rem 0.45rem;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: #525252;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .vault-crumb-btn:hover {
+    background: #f5f5f5;
+    color: #0a0a0a;
   }
   .vault-crumb-current {
     font-weight: 700;
     color: #0a0a0a;
+    padding: 0.2rem 0.45rem;
   }
   .vault-relock-btn {
     padding: 0.4rem 0.85rem;
@@ -124,7 +139,7 @@ layout: default
   }
   .vault-layout {
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 330px 1fr;
     gap: 1.5rem;
     align-items: start;
   }
@@ -144,19 +159,35 @@ layout: default
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  .vault-tree-children {
-    margin-left: 0.85rem;
-    padding-left: 0.65rem;
-    border-left: 1px solid #e5e5e5;
-  }
-  .vault-tree-folder,
-  .vault-tree-file {
+  .vault-tree-row {
     display: flex;
-    align-items: flex-start;
-    gap: 0.45rem;
-    width: 100%;
-    padding: 0.42rem 0.55rem;
+    align-items: center;
+    gap: 0.2rem;
     margin-bottom: 0.2rem;
+  }
+  .vault-toggle-btn {
+    width: 22px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: #525252;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .vault-toggle-btn:hover {
+    background: #e5e5e5;
+    color: #0a0a0a;
+  }
+  .vault-toggle-spacer {
+    width: 22px;
+    flex-shrink: 0;
+  }
+  .vault-tree-post {
+    flex: 1;
+    padding: 0.42rem 0.55rem;
     border: none;
     border-radius: 7px;
     background: transparent;
@@ -166,18 +197,18 @@ layout: default
     text-align: left;
     cursor: pointer;
   }
-  .vault-tree-folder {
-    font-weight: 700;
-    color: #0a0a0a;
-  }
-  .vault-tree-folder:hover,
-  .vault-tree-file:hover {
+  .vault-tree-post:hover {
     background: #efefef;
   }
-  .vault-tree-file.active {
+  .vault-tree-post.active {
     background: #0a0a0a;
     color: #ffffff;
     font-weight: 600;
+  }
+  .vault-tree-children {
+    margin-left: 0.7rem;
+    padding-left: 0.65rem;
+    border-left: 1px solid #e5e5e5;
   }
   .vault-main {
     min-width: 0;
@@ -188,16 +219,6 @@ layout: default
     border-left: 4px solid #0a0a0a;
     border-radius: 12px;
     background: #ffffff;
-  }
-  .vault-card-path {
-    display: inline-block;
-    margin-bottom: 0.65rem;
-    padding: 0.2rem 0.65rem;
-    border-radius: 999px;
-    background: #0a0a0a;
-    color: #ffffff;
-    font-size: 0.76rem;
-    font-weight: 600;
   }
   .vault-card-title {
     margin: 0 0 0.45rem 0;
@@ -243,6 +264,40 @@ layout: default
     color: inherit;
     padding: 0;
   }
+  .vault-subposts {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e5e5e5;
+  }
+  .vault-subposts-title {
+    margin: 0 0 0.85rem 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #737373;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .vault-subpost-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    background: #fafafa;
+    color: #0a0a0a;
+    font-size: 0.94rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .vault-subpost-btn:hover {
+    background: #ffffff;
+    border-color: #0a0a0a;
+  }
   @media (max-width: 900px) {
     .vault-layout {
       grid-template-columns: 1fr;
@@ -263,9 +318,9 @@ layout: default
   const relockBtn = document.getElementById('vault-relock');
   const payloadB64 = document.getElementById('vault-payload').textContent.trim();
 
-  let allPosts = [];
+  let rootPosts = [];
   let selectedPostId = null;
-  const openFolders = {};
+  const expandedMap = {};
 
   function b64ToBytes(b64) {
     const bin = atob(b64);
@@ -305,102 +360,110 @@ layout: default
     return JSON.parse(new TextDecoder().decode(decrypted));
   }
 
-  function buildTree(posts) {
-    const root = { folders: {}, folderOrder: [], posts: [] };
-    posts.forEach(function (post) {
-      const segments = Array.isArray(post.path)
-        ? post.path
-        : (post.category ? [post.category] : []);
-      let node = root;
-      let prefix = '';
-      segments.forEach(function (seg) {
-        prefix = prefix ? prefix + '/' + seg : seg;
-        if (!node.folders[seg]) {
-          node.folders[seg] = { name: seg, key: prefix, folders: {}, folderOrder: [], posts: [] };
-          node.folderOrder.push(seg);
-          if (openFolders[prefix] === undefined) {
-            openFolders[prefix] = true;
-          }
+  function initExpanded(nodes) {
+    nodes.forEach(function (node) {
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        if (expandedMap[node.id] === undefined) {
+          expandedMap[node.id] = true;
         }
-        node = node.folders[seg];
-      });
-      node.posts.push(post);
-    });
-    return root;
-  }
-
-  function renderTreeNode(node, container) {
-    node.folderOrder.forEach(function (folderName) {
-      const folder = node.folders[folderName];
-      const isOpen = !!openFolders[folder.key];
-
-      const folderBtn = document.createElement('button');
-      folderBtn.type = 'button';
-      folderBtn.className = 'vault-tree-folder';
-      folderBtn.textContent = (isOpen ? '▾ 📁 ' : '▸ 📁 ') + folder.name;
-      folderBtn.addEventListener('click', function () {
-        openFolders[folder.key] = !openFolders[folder.key];
-        renderTree();
-      });
-      container.appendChild(folderBtn);
-
-      if (isOpen) {
-        const childWrap = document.createElement('div');
-        childWrap.className = 'vault-tree-children';
-        renderTreeNode(folder, childWrap);
-        container.appendChild(childWrap);
+        initExpanded(node.children);
       }
     });
+  }
 
-    node.posts.forEach(function (post) {
-      const fileBtn = document.createElement('button');
-      fileBtn.type = 'button';
-      fileBtn.className = 'vault-tree-file' + (post.id === selectedPostId ? ' active' : '');
-      fileBtn.textContent = '📄 ' + post.title;
-      fileBtn.addEventListener('click', function () {
-        selectedPostId = post.id;
+  function findTrail(nodes, targetId, trail) {
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const nextTrail = trail.concat([node]);
+      if (node.id === targetId) return nextTrail;
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        const found = findTrail(node.children, targetId, nextTrail);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  function renderTreeNodes(nodes, container) {
+    nodes.forEach(function (node) {
+      const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+      const isOpen = !!expandedMap[node.id];
+
+      const row = document.createElement('div');
+      row.className = 'vault-tree-row';
+
+      if (hasChildren) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'vault-toggle-btn';
+        toggleBtn.textContent = isOpen ? '▾' : '▸';
+        toggleBtn.addEventListener('click', function () {
+          expandedMap[node.id] = !expandedMap[node.id];
+          renderTree();
+        });
+        row.appendChild(toggleBtn);
+      } else {
+        const spacer = document.createElement('span');
+        spacer.className = 'vault-toggle-spacer';
+        row.appendChild(spacer);
+      }
+
+      const postBtn = document.createElement('button');
+      postBtn.type = 'button';
+      postBtn.className = 'vault-tree-post' + (node.id === selectedPostId ? ' active' : '');
+      postBtn.textContent = '📄 ' + node.title;
+      postBtn.addEventListener('click', function () {
+        selectedPostId = node.id;
         render();
       });
-      container.appendChild(fileBtn);
+      row.appendChild(postBtn);
+      container.appendChild(row);
+
+      if (hasChildren && isOpen) {
+        const childWrap = document.createElement('div');
+        childWrap.className = 'vault-tree-children';
+        renderTreeNodes(node.children, childWrap);
+        container.appendChild(childWrap);
+      }
     });
   }
 
   function renderTree() {
     treeEl.innerHTML = '';
-    const tree = buildTree(allPosts);
-    renderTreeNode(tree, treeEl);
+    renderTreeNodes(rootPosts, treeEl);
   }
 
-  function renderBreadcrumb(post) {
+  function renderBreadcrumb(trail) {
     breadcrumbEl.innerHTML = '';
     const rootSpan = document.createElement('span');
     rootSpan.className = 'vault-crumb-current';
     rootSpan.textContent = '🔓 Vault';
     breadcrumbEl.appendChild(rootSpan);
 
-    if (!post) return;
-    const segments = Array.isArray(post.path)
-      ? post.path
-      : (post.category ? [post.category] : []);
+    if (!trail || !trail.length) return;
 
-    segments.forEach(function (seg) {
+    trail.forEach(function (node, idx) {
       const sep = document.createElement('span');
       sep.textContent = '/';
       breadcrumbEl.appendChild(sep);
 
-      const s = document.createElement('span');
-      s.textContent = seg;
-      breadcrumbEl.appendChild(s);
+      if (idx === trail.length - 1) {
+        const cur = document.createElement('span');
+        cur.className = 'vault-crumb-current';
+        cur.textContent = node.title;
+        breadcrumbEl.appendChild(cur);
+      } else {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'vault-crumb-btn';
+        btn.textContent = node.title;
+        btn.addEventListener('click', function () {
+          selectedPostId = node.id;
+          render();
+        });
+        breadcrumbEl.appendChild(btn);
+      }
     });
-
-    const sepLast = document.createElement('span');
-    sepLast.textContent = '/';
-    breadcrumbEl.appendChild(sepLast);
-
-    const titleSpan = document.createElement('span');
-    titleSpan.className = 'vault-crumb-current';
-    titleSpan.textContent = post.title;
-    breadcrumbEl.appendChild(titleSpan);
   }
 
   function renderMain(post) {
@@ -409,16 +472,6 @@ layout: default
 
     const card = document.createElement('section');
     card.className = 'vault-detail-card';
-
-    const segments = Array.isArray(post.path)
-      ? post.path
-      : (post.category ? [post.category] : []);
-    if (segments.length > 0) {
-      const pathBadge = document.createElement('span');
-      pathBadge.className = 'vault-card-path';
-      pathBadge.textContent = segments.join(' / ');
-      card.appendChild(pathBadge);
-    }
 
     const title = document.createElement('h2');
     title.className = 'vault-card-title';
@@ -446,23 +499,53 @@ layout: default
     body.innerHTML = post.content || '';
     card.appendChild(body);
 
+    if (Array.isArray(post.children) && post.children.length > 0) {
+      const subWrap = document.createElement('div');
+      subWrap.className = 'vault-subposts';
+
+      const subTitle = document.createElement('div');
+      subTitle.className = 'vault-subposts-title';
+      subTitle.textContent = '하위 게시물 (' + post.children.length + ')';
+      subWrap.appendChild(subTitle);
+
+      post.children.forEach(function (child) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'vault-subpost-btn';
+        btn.innerHTML = '<span>📄 ' + child.title + '</span><span>→</span>';
+        btn.addEventListener('click', function () {
+          expandedMap[post.id] = true;
+          selectedPostId = child.id;
+          render();
+        });
+        subWrap.appendChild(btn);
+      });
+
+      card.appendChild(subWrap);
+    }
+
     mainEl.appendChild(card);
   }
 
   function render() {
-    const post = allPosts.find(function (p) { return p.id === selectedPostId; }) || allPosts[0];
-    if (post) selectedPostId = post.id;
-    renderBreadcrumb(post);
+    let trail = findTrail(rootPosts, selectedPostId, []);
+    if (!trail && rootPosts.length > 0) {
+      selectedPostId = rootPosts[0].id;
+      trail = [rootPosts[0]];
+    }
+    const currentPost = trail ? trail[trail.length - 1] : null;
+    renderBreadcrumb(trail);
     renderTree();
-    renderMain(post);
+    renderMain(currentPost);
   }
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     errorEl.hidden = true;
     try {
-      allPosts = await decryptPayload(pwInput.value);
-      selectedPostId = allPosts.length ? allPosts[0].id : null;
+      rootPosts = await decryptPayload(pwInput.value);
+      initExpanded(rootPosts);
+      selectedPostId = rootPosts.length ? rootPosts[0].id : null;
       render();
       pwInput.value = '';
       lockBox.hidden = true;
@@ -474,7 +557,7 @@ layout: default
   });
 
   relockBtn.addEventListener('click', function () {
-    allPosts = [];
+    rootPosts = [];
     selectedPostId = null;
     breadcrumbEl.innerHTML = '';
     treeEl.innerHTML = '';
