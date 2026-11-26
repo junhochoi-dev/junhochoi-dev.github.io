@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>연애등급측정기 | 내 결정사 현실 등급은?</title>
-  <meta name="description" content="결혼정보회사에 내 프로필을 접수한다면 몇 등급일까? 40초 만에 확인하는 현실 연애·결혼 등급 테스트" />
+  <meta name="description" content="내가 생각하는 내 등급 vs 실제 결정사 판정 등급! 40초 만에 확인하는 현실 연애·결혼 등급 테스트" />
   <meta property="og:title" content="연애등급측정기 - 내 결정사 현실 등급은?" />
-  <meta property="og:description" content="40초 만에 확인하는 결정사 모의 판정 등급과 매니저 팩폭 리포트!" />
+  <meta property="og:description" content="내 예상 등급과 실제 매니저 판정 등급의 차이를 확인해 보세요." />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="style.css" />
@@ -38,8 +38,8 @@
     <!-- 2. 질문 화면 -->
     <main id="screen-quiz" class="screen">
       <div class="quiz-header">
-        <button type="button" id="btn-prev" class="btn-ghost" aria-label="이전 문항">← 이전</button>
-        <span id="progress-text" class="progress-text">1 / 8</span>
+        <button type="button" id="btn-prev" class="btn-ghost" aria-label="뒤로가기">← 뒤로가기</button>
+        <span id="progress-text" class="progress-text">1 / 10</span>
       </div>
       <div class="progress-track">
         <div id="progress-fill" class="progress-fill"></div>
@@ -98,8 +98,9 @@
         <button type="button" id="btn-save-img" class="btn-primary">결과 카드 이미지 저장</button>
         <div class="action-row">
           <button type="button" id="btn-copy-link" class="btn-secondary">결과 텍스트 복사</button>
-          <button type="button" id="btn-retry" class="btn-secondary">다시 측정하기</button>
+          <button type="button" id="btn-result-back" class="btn-secondary">← 뒤로가서 수정</button>
         </div>
+        <button type="button" id="btn-retry" class="btn-secondary">처음부터 다시 측정하기</button>
       </div>
     </main>
 

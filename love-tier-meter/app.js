@@ -37,10 +37,16 @@ const progressFill = document.getElementById('progress-fill');
 const quizBody = document.getElementById('quiz-body');
 const toastEl = document.getElementById('toast');
 
-function showScreen(name) {
+let isHandlingPopState = false;
+
+function showScreen(name, pushHistory = true) {
   Object.values(screens).forEach((el) => el.classList.remove('active'));
   screens[name].classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (pushHistory && !isHandlingPopState) {
+    history.pushState({ screen: name, step: state.currentStep }, '');
+  }
 }
 
 function showToast(msg) {
@@ -48,6 +54,24 @@ function showToast(msg) {
   toastEl.classList.add('show');
   setTimeout(() => toastEl.classList.remove('show'), 2200);
 }
+
+history.replaceState({ screen: 'intro', step: 0 }, '');
+
+window.addEventListener('popstate', (e) => {
+  const target = e.state;
+  if (!target) return;
+  isHandlingPopState = true;
+  if (target.screen === 'intro') {
+    showScreen('intro', false);
+  } else if (target.screen === 'quiz') {
+    state.currentStep = target.step || 0;
+    showScreen('quiz', false);
+    renderQuestion();
+  } else if (target.screen === 'result' && lastResult) {
+    showScreen('result', false);
+  }
+  isHandlingPopState = false;
+});
 
 btnStart.addEventListener('click', () => {
   state.currentStep = 0;
@@ -61,6 +85,7 @@ btnPrev.addEventListener('click', () => {
     return;
   }
   state.currentStep -= 1;
+  showScreen('quiz');
   renderQuestion();
 });
 
@@ -566,6 +591,7 @@ function renderJobStep(q) {
 function goNextStep() {
   if (state.currentStep < QUESTIONS.length - 1) {
     state.currentStep += 1;
+    showScreen('quiz');
     renderQuestion();
   } else {
     runAnalysis();
@@ -918,6 +944,13 @@ document.getElementById('btn-copy-link').addEventListener('click', async () => {
   } catch {
     showToast('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
   }
+});
+
+// 결과 화면에서 뒤로가서 수정
+document.getElementById('btn-result-back').addEventListener('click', () => {
+  state.currentStep = QUESTIONS.length - 1;
+  showScreen('quiz');
+  renderQuestion();
 });
 
 // 다시 하기
