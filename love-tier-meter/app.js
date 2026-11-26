@@ -98,8 +98,9 @@ function validateBirthdate(yStr, mStr, dStr) {
 function renderQuestion() {
   const q = QUESTIONS[state.currentStep];
   const total = QUESTIONS.length;
-  progressText.textContent = `${state.currentStep + 1} / ${total}`;
-  progressFill.style.width = `${((state.currentStep + 1) / total) * 100}%`;
+  const percent = Math.round(((state.currentStep + 1) / total) * 100);
+  progressText.textContent = `${state.currentStep + 1} / ${total} (${percent}%)`;
+  progressFill.style.width = `${percent}%`;
 
   if (q.type === 'profile') {
     renderProfileStep(q);
