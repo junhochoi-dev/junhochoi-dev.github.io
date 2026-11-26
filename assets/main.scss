@@ -26,6 +26,7 @@ a:hover {
   margin-right: auto;
   padding-right: 16px;
   padding-left: 16px;
+  box-sizing: border-box;
 }
 
 .site-header {
@@ -71,6 +72,7 @@ a:hover {
   margin: 0;
   font-size: 0.98rem;
   color: #525252;
+  line-height: 1.6;
 }
 
 /* Hero Section (Monochrome) */
@@ -172,6 +174,142 @@ a:hover {
   grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
   margin-bottom: 2rem;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.stat-card {
+  padding: 1.35rem 1.4rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.stat-card-dark {
+  background: #0a0a0a;
+  border-color: #0a0a0a;
+  color: #ffffff;
+}
+
+.stat-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #737373;
+  margin-bottom: 0.4rem;
+}
+
+.stat-card-dark .stat-label {
+  color: #a3a3a3;
+}
+
+.stat-value {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0a0a0a;
+  margin-bottom: 0.25rem;
+}
+
+.stat-card-dark .stat-value {
+  color: #ffffff;
+}
+
+.stat-sub {
+  font-size: 0.84rem;
+  color: #525252;
+}
+
+.stat-card-dark .stat-sub {
+  color: #d4d4d4;
+}
+
+.log-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.log-filter-btn {
+  padding: 0.45rem 0.95rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #525252;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.log-filter-btn:hover {
+  border-color: #0a0a0a;
+  color: #0a0a0a;
+}
+
+.log-filter-btn.active {
+  background: #0a0a0a;
+  border-color: #0a0a0a;
+  color: #ffffff;
+}
+
+.race-header {
+  display: grid;
+  grid-template-columns: 110px 1fr 84px 100px 100px 230px;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 2px solid #e5e5e5;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.race-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.race-list li {
+  display: grid;
+  grid-template-columns: 110px 1fr 84px 100px 100px 230px;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 0.92rem;
+  color: #262626;
+}
+
+.race-list li[hidden] {
+  display: none !important;
+}
+
+.race-list li:last-child {
+  border-bottom: none;
+}
+
+.race-time {
+  font-weight: 700;
+  color: #0a0a0a;
+  font-variant-numeric: tabular-nums;
+}
+
+.pb-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: #0a0a0a;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .stack-card {
@@ -523,6 +661,19 @@ a:hover {
   border-bottom-color: #0a0a0a;
 }
 
+@media (max-width: 900px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .race-header {
+    display: none;
+  }
+  .race-list li {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+}
+
 @media (max-width: 768px) {
   .wrapper {
     width: 100% !important;
@@ -534,7 +685,8 @@ a:hover {
     font-size: 1.85rem;
   }
   .card-grid,
-  .two-col-grid {
+  .two-col-grid,
+  .stat-grid {
     grid-template-columns: 1fr;
   }
   .edu-header,
