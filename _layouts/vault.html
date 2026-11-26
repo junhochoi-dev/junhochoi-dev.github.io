@@ -59,6 +59,10 @@ layout: default
 <script id="vault-payload" type="text/plain">{{ page.encrypted_payload }}</script>
 
 <style>
+  .vault-lock-wrap[hidden],
+  #vault-unlocked[hidden] {
+    display: none !important;
+  }
   .vault-lock-wrap {
     display: flex;
     justify-content: center;
@@ -414,7 +418,7 @@ layout: default
 <script>
 (function () {
   const SESSION_KEY = 'vault_session_v1';
-  const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
+  const SESSION_TTL_MS = 30 * 60 * 1000;
 
   const lockBox = document.getElementById('vault-lock');
   const lockCard = lockBox.querySelector('.vault-card-lock');
@@ -749,7 +753,6 @@ layout: default
     pwInput.focus();
   });
 
-  // Restore active session if valid
   const existing = loadSession();
   if (existing) {
     openVault(existing.posts, existing.expiresAt);
