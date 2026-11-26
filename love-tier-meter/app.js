@@ -386,6 +386,8 @@ function renderEducationStep(q) {
   const { educationDegree, educationTier } = state.answers;
   const selectedDegreeObj = educationDegree !== null ? q.degreeOptions[educationDegree] : null;
   const showTier = Boolean(selectedDegreeObj && selectedDegreeObj.needsTier);
+  const canProceed =
+    educationDegree !== null && (!showTier || educationTier !== null);
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
@@ -425,11 +427,7 @@ function renderEducationStep(q) {
       </div>
 
       <div id="edu-error" class="error-msg"></div>
-      ${
-        showTier
-          ? `<button type="button" id="btn-edu-next" class="btn-primary" ${educationTier === null ? 'disabled' : ''}>다음 문항으로</button>`
-          : ''
-      }
+      <button type="button" id="btn-edu-next" class="btn-primary" ${canProceed ? '' : 'disabled'}>다음 문항으로</button>
     </div>
   `;
 
@@ -439,8 +437,6 @@ function renderEducationStep(q) {
       state.answers.educationDegree = idx;
       if (!q.degreeOptions[idx].needsTier) {
         state.answers.educationTier = null;
-        goNextStep();
-        return;
       }
       renderEducationStep(q);
     });
@@ -449,20 +445,22 @@ function renderEducationStep(q) {
   quizBody.querySelectorAll('[data-tier-idx]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.answers.educationTier = Number(btn.dataset.tierIdx);
-      goNextStep();
+      renderEducationStep(q);
     });
   });
 
-  const btnEduNext = document.getElementById('btn-edu-next');
-  if (btnEduNext) {
-    btnEduNext.addEventListener('click', () => {
-      if (state.answers.educationTier === null) {
-        document.getElementById('edu-error').textContent = '출신 대학 구간을 선택해 주세요.';
-        return;
-      }
-      goNextStep();
-    });
-  }
+  document.getElementById('btn-edu-next').addEventListener('click', () => {
+    if (state.answers.educationDegree === null) {
+      document.getElementById('edu-error').textContent = '최종 학력을 선택해 주세요.';
+      return;
+    }
+    const deg = q.degreeOptions[state.answers.educationDegree];
+    if (deg.needsTier && state.answers.educationTier === null) {
+      document.getElementById('edu-error').textContent = '출신 대학 구간을 선택해 주세요.';
+      return;
+    }
+    goNextStep();
+  });
 }
 
 function formatSalaryKorean(manwon) {
