@@ -506,6 +506,89 @@ body {
   margin-top: 16px;
 }
 
+/* BMI 게이지 바 */
+.bmi-gauge-wrap {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+}
+
+.bmi-summary {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.bmi-pointer-track {
+  position: relative;
+  height: 26px;
+  margin-bottom: 4px;
+}
+
+.bmi-pointer {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: left 0.2s ease;
+}
+
+.bmi-pointer-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  background: var(--primary);
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.bmi-pointer-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--primary);
+  margin-top: 1px;
+}
+
+.bmi-bar {
+  display: grid;
+  grid-template-columns: 40fr 25fr 35fr;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.bmi-seg-normal {
+  background: #10b981;
+}
+
+.bmi-seg-over {
+  background: #f59e0b;
+}
+
+.bmi-seg-obese {
+  background: #ef4444;
+}
+
+.bmi-labels {
+  display: grid;
+  grid-template-columns: 40fr 25fr 35fr;
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-sub);
+  text-align: center;
+}
+
 /* 로딩 */
 .loading-card {
   text-align: center;

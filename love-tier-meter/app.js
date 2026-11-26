@@ -356,10 +356,24 @@ function renderProfileStep(q) {
 
 function getBmiCategory(bmi) {
   if (bmi < 18.5) return '저체중';
-  if (bmi < 23) return '표준';
-  if (bmi < 25) return '과체중 전단계';
-  if (bmi < 30) return '과체중';
-  return '고도비만';
+  if (bmi < 23) return '정상';
+  if (bmi < 25) return '과체중';
+  return '비만';
+}
+
+function getBmiBarPercent(bmi) {
+  let pct = 0;
+  if (bmi < 23) {
+    const ratio = Math.max(0, Math.min(1, (bmi - 15) / (23 - 15)));
+    pct = ratio * 40;
+  } else if (bmi < 25) {
+    const ratio = (bmi - 23) / (25 - 23);
+    pct = 40 + ratio * 25;
+  } else {
+    const ratio = Math.max(0, Math.min(1, (bmi - 25) / (35 - 25)));
+    pct = 65 + ratio * 35;
+  }
+  return Math.max(4, Math.min(96, pct));
 }
 
 function renderBodyStep(q) {
@@ -386,7 +400,25 @@ function renderBodyStep(q) {
         </div>
       </div>
 
-      <div id="body-preview" class="age-preview" style="display:none;"></div>
+      <div id="body-preview" class="bmi-gauge-wrap" style="display:none;">
+        <div id="bmi-summary" class="bmi-summary"></div>
+        <div class="bmi-pointer-track">
+          <div id="bmi-pointer" class="bmi-pointer" style="left: 25%;">
+            <span id="bmi-pointer-tag" class="bmi-pointer-tag">22.0</span>
+            <span class="bmi-pointer-arrow"></span>
+          </div>
+        </div>
+        <div class="bmi-bar">
+          <div class="bmi-seg-normal"></div>
+          <div class="bmi-seg-over"></div>
+          <div class="bmi-seg-obese"></div>
+        </div>
+        <div class="bmi-labels">
+          <span>정상</span>
+          <span>과체중</span>
+          <span>비만</span>
+        </div>
+      </div>
       <div id="body-error" class="error-msg"></div>
 
       <div class="quiz-nav-row">
@@ -399,6 +431,9 @@ function renderBodyStep(q) {
   const heightEl = document.getElementById('input-height');
   const weightEl = document.getElementById('input-weight');
   const previewEl = document.getElementById('body-preview');
+  const summaryEl = document.getElementById('bmi-summary');
+  const pointerEl = document.getElementById('bmi-pointer');
+  const pointerTagEl = document.getElementById('bmi-pointer-tag');
   const errorEl = document.getElementById('body-error');
 
   function updateBodyPreview() {
@@ -408,8 +443,11 @@ function renderBodyStep(q) {
     const w = Number(state.answers.weightKg);
     if (h >= 120 && h <= 230 && w >= 30 && w <= 220) {
       const bmi = w / ((h / 100) * (h / 100));
+      const pct = getBmiBarPercent(bmi);
       previewEl.style.display = 'block';
-      previewEl.textContent = `${h}cm · ${w}kg (BMI ${bmi.toFixed(1)} · ${getBmiCategory(bmi)})`;
+      summaryEl.textContent = `${h}cm · ${w}kg · BMI ${bmi.toFixed(1)} (${getBmiCategory(bmi)})`;
+      pointerEl.style.left = `${pct}%`;
+      pointerTagEl.textContent = bmi.toFixed(1);
       errorEl.textContent = '';
     } else {
       previewEl.style.display = 'none';
