@@ -7,80 +7,87 @@ const TIER_PROFILES = {
     minScore: 90,
     label: '상위 5% 유니콘 매물',
     headline: '“매니저가 먼저 모시러 가는 1순위 프로필입니다.”',
-    comment: '현실적인 스펙과 연애 성향, 시장 내 호감도가 모두 최상위권입니다. 까다로운 조건을 걸어도 매칭 대기열이 길게 늘어서는 타입입니다.',
+    comment: '자산·소득 기반, 자기관리, 연애 내공이 모두 최상위권입니다. 까다로운 조건을 걸어도 매칭 대기열이 길게 늘어서는 타입입니다.',
     advice: '이미 경쟁력이 충분합니다. 단, 완벽한 조건만 찾다가 타이밍을 놓치지 않도록 ‘대화가 통하는 사람’에 가중치를 두어 보세요.'
   },
   A: {
     minScore: 76,
     label: '1군 인기 매물',
     headline: '“결정사 등록 즉시 소개 요청이 쏟아질 타입입니다.”',
-    comment: '안정적인 기반과 균형 잡힌 연애관을 갖추고 있어 호불호 없이 폭넓게 사랑받는 스펙입니다. 현실 감각도 좋은 편입니다.',
+    comment: '안정적인 자산·직업 기반과 꾸준한 자기관리, 균형 잡힌 연애관을 갖추고 있어 폭넓게 사랑받는 프로필입니다.',
     advice: '현재 강점을 유지하면서, 첫 만남에서 유연하고 여유 있는 태도를 보여주면 S등급 못지않은 매칭 결과를 얻을 수 있습니다.'
   },
   B: {
     minScore: 60,
     label: '무난한 호감형',
-    headline: '“조건은 나쁘지 않은데, 한 끗 포인트가 아쉽네요.”',
-    comment: '대체로 무난하고 성실한 인상을 주지만, 경쟁이 치열한 결정사 시장에서는 뚜렷한 매력 포인트나 조건 조율이 필요할 수 있습니다.',
-    advice: '자기관리나 소통 스타일 중 한 가지만 확실히 끌어올려도 A등급 매칭 풀에 충분히 진입할 수 있습니다.'
+    headline: '“전체적으로 무난한데, 한 끗 포인트가 아쉽네요.”',
+    comment: '성실한 인상을 주지만, 경쟁이 치열한 결정사 시장에서는 자산·자기관리·연애 성향 중 한 가지 강점을 더 부각할 필요가 있습니다.',
+    advice: '꾸준한 운동 습관이나 소비·소통 스타일 중 한 가지만 확실히 끌어올려도 A등급 매칭 풀에 진입할 수 있습니다.'
   },
   C: {
     minScore: 44,
     label: '조건 조율 필요',
-    headline: '“내 스펙 대비 눈높이나 허들을 점검해 볼 시점입니다.”',
-    comment: '본인의 장점은 있지만, 생활 습관 허들이나 상대에게 바라는 기준 때문에 실제 매칭 가능한 풀(Pool)이 좁아진 상태입니다.',
+    headline: '“내 조건 대비 눈높이나 생활 허들을 점검해 볼 시점입니다.”',
+    comment: '장점은 있지만 생활 습관(흡연·음주·식단·종교) 허들이나 눈높이 때문에 실제 매칭 가능한 풀(Pool)이 좁아진 상태입니다.',
     advice: '‘절대 포기 못 하는 조건’을 딱 2가지만 남기고 나머지는 열어두면 소개 성공률이 크게 올라갑니다.'
   },
   D: {
     minScore: 0,
     label: '매니저 비상 호출',
     headline: '“솔직히 말씀드리면, 이 조건으론 매칭이 어렵습니다.”',
-    comment: '결정사 시스템은 냉정합니다. 현재 스펙 대비 요구 조건이 높거나, 상대방 입장에서 부담스러워할 만한 생활·연애 허들이 겹쳐 있습니다.',
-    advice: '당장 눈높이를 낮추기보다, 통제 가능한 요소(자기관리·소비습관·소통 태도)부터 하나씩 리셋해 보시는 걸 추천합니다.'
+    comment: '결정사 시스템은 냉정합니다. 현재 자산·소득 기반 대비 요구 조건이 높거나, 상대방 입장에서 부담스러워할 허들이 겹쳐 있습니다.',
+    advice: '당장 눈높이를 낮추기보다, 통제 가능한 요소(저축·운동·생활습관·소통 태도)부터 하나씩 리셋해 보시는 걸 추천합니다.'
   }
 };
+
+const REGIONS = [
+  '서울', '경기 · 인천', '부산', '대구', '광주', '대전', '울산', '세종',
+  '강원', '충청', '전라', '경상', '제주', '해외'
+];
 
 const QUESTIONS = [
   {
     id: 'profile',
     stepTitle: '기본 프로필',
-    title: '성별과 생년월일을 알려주세요',
-    desc: '만 나이를 자동 계산해 결정사 시장 연령 가중치에 반영합니다.',
+    title: '성별과 출생 정보, 거주지를 알려주세요',
+    desc: '만 나이·연 나이와 12지신, 실시간 인생 카운터를 계산합니다.',
     type: 'profile'
   },
   {
     id: 'body',
     stepTitle: '신체 조건',
     title: '키와 몸무게를 알려주세요',
-    desc: '성별 기준 키와 BMI 균형도를 피지컬 지표에 반영합니다.',
+    desc: '입력을 마치면 아래 BMI 게이지 화살표가 내 위치로 이동합니다.',
     type: 'body'
   },
   {
     id: 'education',
     stepTitle: '학력',
     title: '최종 학력을 알려주세요',
-    desc: '4년제 대졸 이상인 경우 출신 대학 구간도 함께 선택합니다.',
+    desc: '대졸 이상인 경우 수도권·지방 대학 구간을 함께 선택합니다.',
     type: 'education',
     degreeOptions: [
       { label: '중졸 이하', spec: 1, appeal: 0, needsTier: false },
       { label: '고졸', spec: 2, appeal: 1, needsTier: false },
       { label: '전문대졸', spec: 4, appeal: 2, needsTier: false },
-      { label: '4년제 대졸', spec: 6, appeal: 3, needsTier: true },
+      { label: '대졸', spec: 6, appeal: 3, needsTier: true },
       { label: '석사', spec: 8, appeal: 4, needsTier: true },
       { label: '박사', spec: 9, appeal: 4, needsTier: true }
     ],
     tierOptions: [
       { label: '최상위권 (SKY · 카포 · 의약학 · 해외 명문)', spec: 6, appeal: 3 },
-      { label: '인서울 주요대 · 상위 거점국립대', spec: 4, appeal: 2 },
-      { label: '일반 4년제 대학 (수도권 · 지방)', spec: 2, appeal: 1 },
+      { label: '수도권 주요 대학 (인서울 · 주요 공대 등)', spec: 4, appeal: 2 },
+      { label: '지방 거점국립대', spec: 4, appeal: 2 },
+      { label: '수도권 일반 대학', spec: 3, appeal: 1 },
+      { label: '지방 일반 대학', spec: 2, appeal: 1 },
       { label: '방통대 · 사이버대 · 학점은행 등', spec: 1, appeal: 0 }
     ]
   },
   {
     id: 'job',
     stepTitle: '직업 · 소득',
-    title: '고용 형태와 순 계약 연봉을 알려주세요',
-    desc: '고용 안정성과 순수 기본급 기준으로 현실 스펙을 평가합니다.',
+    title: '고용 형태와 연봉·인센티브를 알려주세요',
+    desc: '순 계약 연봉과 인센티브를 합산해 세전·세후 총합을 계산합니다.',
     type: 'job',
     employmentOptions: [
       { label: '정규직 (일반 기업)', spec: 10, appeal: 6 },
@@ -93,42 +100,108 @@ const QUESTIONS = [
   },
   {
     id: 'housing',
-    stepTitle: '현실 스펙',
-    title: '현재 주거 및 자산 상태는 어느 쪽에 가깝나요?',
-    desc: '실제 결혼 준비 가능성을 가늠하는 항목입니다.',
-    type: 'single',
+    stepTitle: '자산 · 부동산',
+    title: '현재 주거 형태와 월 주거 비용을 알려주세요',
+    desc: '자가·전세·월세·본가 구분과 매월 나가는 비용을 함께 반영합니다.',
+    type: 'housing',
     options: [
-      { label: '자가 보유 또는 넉넉한 자산 기반 있음', spec: 22, appeal: 6 },
-      { label: '안정적인 전세 / 대출 부담 적은 독립 거주', spec: 17, appeal: 5 },
-      { label: '월세 자취 중 (모아둔 자산은 보통)', spec: 11, appeal: 4 },
-      { label: '부모님 댁 거주 / 아직 모아둔 자산이 적음', spec: 6, appeal: 2 }
+      { label: '자가', costLabel: '월 대출이자 · 관리비 (만원)', spec: 22, appeal: 6 },
+      { label: '전세', costLabel: '월 전세대출이자 · 관리비 (만원)', spec: 17, appeal: 5 },
+      { label: '월세', costLabel: '월세 · 관리비 합계 (만원)', spec: 11, appeal: 4 },
+      { label: '본가 거주', costLabel: '월 생활비 보탬 (만원, 없으면 0)', spec: 6, appeal: 2 }
     ]
   },
   {
-    id: 'appearance',
-    stepTitle: '첫인상',
-    title: '외모 및 평소 자기관리 수준은 어떤가요?',
-    desc: '객관적으로 주변에서 듣는 평가를 떠올려 보세요.',
+    id: 'savings',
+    stepTitle: '자산 · 저축',
+    title: '보유 중인 금융 자산과 대출을 알려주세요',
+    desc: '현금·예적금·연금·코인 합산에서 부동산 외 대출을 차감해 순자산을 계산합니다.',
+    type: 'savings'
+  },
+  {
+    id: 'car',
+    stepTitle: '자산 · 차량',
+    title: '현재 본인 명의 차량을 보유하고 있나요?',
+    desc: '유지비 부담과 이동 편의성을 함께 고려합니다.',
     type: 'single',
     options: [
-      { label: '어딜 가든 외모·피지컬 칭찬을 자주 듣는다', spec: 12, appeal: 16 },
-      { label: '깔끔한 호감형이고 꾸준히 운동·관리를 한다', spec: 9, appeal: 13 },
-      { label: '평범하고 무난한 인상이다', spec: 6, appeal: 8 },
-      { label: '외모나 패션 관리에 크게 신경 쓰지 않는다', spec: 2, appeal: 3 }
+      { label: '자차 보유 (할부 없음)', spec: 6, appeal: 4 },
+      { label: '자차 보유 (할부 상환 중)', spec: 3, appeal: 3 },
+      { label: '차량 없음 (대중교통 · 필요 시 렌트)', spec: 2, appeal: 2 }
+    ]
+  },
+  {
+    id: 'selfcare',
+    stepTitle: '자기관리 · 운동',
+    title: '평소 운동 습관과 꾸준함을 알려주세요',
+    desc: '자기관리의 척도인 주간 운동 빈도·시간과 누적 경력을 반영합니다.',
+    type: 'selfcare',
+    freqOptions: [
+      { label: '거의 안 함 (주 0회)', score: 2 },
+      { label: '주 1~2회', score: 8 },
+      { label: '주 3~4회', score: 14 },
+      { label: '주 5회 이상', score: 16 }
+    ],
+    durationOptions: [
+      { label: '30분 미만', score: 2 },
+      { label: '30분 ~ 1시간', score: 5 },
+      { label: '1시간 ~ 1시간 30분', score: 8 },
+      { label: '1시간 30분 이상', score: 9 }
+    ],
+    yearsOptions: [
+      { label: '6개월 미만 / 입문', score: 1 },
+      { label: '6개월 ~ 1년', score: 4 },
+      { label: '1년 ~ 3년', score: 7 },
+      { label: '3년 이상 꾸준히', score: 10 }
     ]
   },
   {
     id: 'lifestyle',
-    stepTitle: '매칭 난이도',
-    title: '본인에게 해당하는 생활·가치관 요소를 모두 골라주세요',
-    desc: '특정 조건이 겹칠수록 실제 매칭 가능한 상대 풀(Pool)이 줄어듭니다.',
-    type: 'multi',
-    options: [
-      { label: '엄격한 식단 고집 (채식 · 비건 · 심한 편식 등)', penalty: 9, tag: '식단 허들' },
-      { label: '흡연', penalty: 8, tag: '흡연' },
-      { label: '상대도 맞춰야 하는 강한 종교적 신념', penalty: 8, tag: '종교 허들' },
-      { label: '잦은 음주·유흥 또는 게임·취미 올인', penalty: 7, tag: '생활 패턴' },
-      { label: '특별한 제한 없음 (무난하게 맞추는 편)', penalty: 0, exclusive: true }
+    stepTitle: '자기관리 · 생활습관',
+    title: '흡연·음주·종교·식단 성향을 선택해 주세요',
+    desc: '매칭 시 상대방과의 생활 궁합 및 타협 난이도를 평가합니다.',
+    type: 'lifestyle',
+    smokingOptions: [
+      { label: '비흡연', penalty: 0, tag: null },
+      { label: '전자담배', penalty: 4, tag: '전자담배' },
+      { label: '연초 흡연', penalty: 8, tag: '흡연' }
+    ],
+    drinkingOptions: [
+      { label: '안 마심 / 월 1~2회', penalty: 0, tag: null },
+      { label: '주 1~2회', penalty: 1, tag: null },
+      { label: '주 3~4회', penalty: 5, tag: '잦은 음주' },
+      { label: '주 5회 이상', penalty: 9, tag: '과음' }
+    ],
+    religionOptions: [
+      { label: '무교', penalty: 0, tag: null },
+      { label: '종교 있음 (상대에게 강요 안 함)', penalty: 2, tag: null },
+      { label: '종교 있음 (같은 종교·신념 중요)', penalty: 8, tag: '종교 허들' }
+    ],
+    dietOptions: [
+      { label: '일반식 (가리는 것 없이 잘 먹음)', penalty: 0, tag: null },
+      { label: '유연한 식단 (페스코 · 다이어트 식단 등)', penalty: 3, tag: null },
+      { label: '엄격한 채식 (비건 · 락토 · 오보 등)', penalty: 9, tag: '엄격한 채식' },
+      { label: '극단적 편식 · 특정 식재료 강한 거부', penalty: 6, tag: '까다로운 식성' }
+    ]
+  },
+  {
+    id: 'dating',
+    stepTitle: '연애 이력',
+    title: '지금까지의 연애 횟수와 최장기간은?',
+    desc: '연애 경험치와 관계 유지력을 참고 지표로 반영합니다.',
+    type: 'dating',
+    countOptions: [
+      { label: '0회 (연애 경험 없음)', score: 3 },
+      { label: '1 ~ 2회', score: 8 },
+      { label: '3 ~ 5회', score: 12 },
+      { label: '6회 이상', score: 10 }
+    ],
+    longestOptions: [
+      { label: '해당 없음', score: 2 },
+      { label: '6개월 미만', score: 5 },
+      { label: '6개월 ~ 1년', score: 8 },
+      { label: '1년 ~ 3년', score: 12 },
+      { label: '3년 이상', score: 13 }
     ]
   },
   {
