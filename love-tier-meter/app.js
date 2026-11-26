@@ -31,7 +31,6 @@ const screens = {
 };
 
 const btnStart = document.getElementById('btn-start');
-const btnPrev = document.getElementById('btn-prev');
 const progressText = document.getElementById('progress-text');
 const progressFill = document.getElementById('progress-fill');
 const quizBody = document.getElementById('quiz-body');
@@ -79,7 +78,7 @@ btnStart.addEventListener('click', () => {
   renderQuestion();
 });
 
-btnPrev.addEventListener('click', () => {
+function handleBackStep() {
   if (state.currentStep === 0) {
     showScreen('intro');
     return;
@@ -87,7 +86,13 @@ btnPrev.addEventListener('click', () => {
   state.currentStep -= 1;
   showScreen('quiz');
   renderQuestion();
-});
+}
+
+function bindBackButtons() {
+  quizBody.querySelectorAll('.btn-quiz-back').forEach((btn) => {
+    btn.addEventListener('click', handleBackStep);
+  });
+}
 
 // 만 나이 및 띠 계산
 function calculateAgeAndZodiac(y, m, d) {
@@ -149,6 +154,7 @@ function renderQuestion() {
 
   if (q.type === 'single') {
     const selectedIdx = state.answers[q.id];
+    const nextLabel = state.currentStep === total - 1 ? '결과 보기' : '다음 문항으로';
     quizBody.innerHTML = `
       <span class="q-step-badge">${q.stepTitle}</span>
       <h2 class="q-title">${q.title}</h2>
@@ -165,14 +171,26 @@ function renderQuestion() {
           )
           .join('')}
       </div>
+      <div class="quiz-nav-row" style="margin-top: 18px;">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
+        <button type="button" id="btn-single-next" class="btn-primary" ${selectedIdx === null ? 'disabled' : ''}>
+          ${nextLabel}
+        </button>
+      </div>
     `;
 
     quizBody.querySelectorAll('.option-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         state.answers[q.id] = Number(btn.dataset.idx);
-        goNextStep();
+        renderQuestion();
       });
     });
+
+    document.getElementById('btn-single-next').addEventListener('click', () => {
+      if (state.answers[q.id] === null) return;
+      goNextStep();
+    });
+    bindBackButtons();
     return;
   }
 
@@ -195,9 +213,10 @@ function renderQuestion() {
           })
           .join('')}
       </div>
-      <div style="margin-top: 18px;">
+      <div class="quiz-nav-row" style="margin-top: 18px;">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
         <button type="button" id="btn-multi-next" class="btn-primary" ${selected.length === 0 ? 'disabled' : ''}>
-          선택 완료
+          다음 문항으로
         </button>
       </div>
     `;
@@ -229,6 +248,7 @@ function renderQuestion() {
     if (btnMultiNext) {
       btnMultiNext.addEventListener('click', goNextStep);
     }
+    bindBackButtons();
   }
 }
 
@@ -274,7 +294,10 @@ function renderProfileStep(q) {
       <div id="age-preview" class="age-preview" style="display:none;"></div>
       <div id="profile-error" class="error-msg"></div>
 
-      <button type="button" id="btn-profile-next" class="btn-primary">다음 문항으로</button>
+      <div class="quiz-nav-row">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
+        <button type="button" id="btn-profile-next" class="btn-primary">다음 문항으로</button>
+      </div>
     </div>
   `;
 
@@ -328,6 +351,7 @@ function renderProfileStep(q) {
     }
     goNextStep();
   });
+  bindBackButtons();
 }
 
 function getBmiCategory(bmi) {
@@ -365,7 +389,10 @@ function renderBodyStep(q) {
       <div id="body-preview" class="age-preview" style="display:none;"></div>
       <div id="body-error" class="error-msg"></div>
 
-      <button type="button" id="btn-body-next" class="btn-primary">다음 문항으로</button>
+      <div class="quiz-nav-row">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
+        <button type="button" id="btn-body-next" class="btn-primary">다음 문항으로</button>
+      </div>
     </div>
   `;
 
@@ -405,6 +432,7 @@ function renderBodyStep(q) {
     }
     goNextStep();
   });
+  bindBackButtons();
 }
 
 function renderEducationStep(q) {
@@ -452,7 +480,10 @@ function renderEducationStep(q) {
       </div>
 
       <div id="edu-error" class="error-msg"></div>
-      <button type="button" id="btn-edu-next" class="btn-primary" ${canProceed ? '' : 'disabled'}>다음 문항으로</button>
+      <div class="quiz-nav-row">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
+        <button type="button" id="btn-edu-next" class="btn-primary" ${canProceed ? '' : 'disabled'}>다음 문항으로</button>
+      </div>
     </div>
   `;
 
@@ -486,6 +517,7 @@ function renderEducationStep(q) {
     }
     goNextStep();
   });
+  bindBackButtons();
 }
 
 function formatSalaryKorean(manwon) {
@@ -532,7 +564,10 @@ function renderJobStep(q) {
       <div id="salary-preview" class="age-preview" style="display:none;"></div>
       <div id="job-error" class="error-msg"></div>
 
-      <button type="button" id="btn-job-next" class="btn-primary">다음 문항으로</button>
+      <div class="quiz-nav-row">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
+        <button type="button" id="btn-job-next" class="btn-primary">다음 문항으로</button>
+      </div>
     </div>
   `;
 
@@ -586,6 +621,7 @@ function renderJobStep(q) {
     }
     goNextStep();
   });
+  bindBackButtons();
 }
 
 function goNextStep() {
