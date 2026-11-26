@@ -7,25 +7,45 @@ layout: default
 <p class="page-banner-desc">암호화된 비공개 메모 &amp; 자격증 정리 공간</p>
 </div>
 
-<div id="vault-lock" class="vault-box">
-  <p class="vault-desc">🔒 이 공간의 게시물은 암호화되어 있습니다. 비밀번호를 입력해 주세요.</p>
-  <form id="vault-form" class="vault-form">
-    <input
-      type="password"
-      id="vault-password"
-      placeholder="비밀번호 입력"
-      autocomplete="current-password"
-      required
-    />
-    <button type="submit" id="vault-submit">잠금 해제</button>
-  </form>
-  <p id="vault-error" class="vault-error" hidden>비밀번호가 올바르지 않습니다.</p>
+<div id="vault-lock" class="vault-lock-wrap">
+  <div class="vault-card-lock">
+    <div class="vault-lock-icon-wrap">
+      <span class="vault-lock-icon">🔒</span>
+    </div>
+    <div class="vault-lock-eyebrow">PRIVATE VAULT · ENCRYPTED</div>
+    <h2 class="vault-lock-title">Access Restricted</h2>
+    <p class="vault-lock-desc">
+      이 공간의 게시물은 브라우저에서 직접 복호화됩니다.<br>
+      잠금을 해제하려면 비밀번호를 입력해 주세요.
+    </p>
+    <form id="vault-form" class="vault-form">
+      <input
+        type="password"
+        id="vault-password"
+        placeholder="Enter password..."
+        autocomplete="current-password"
+        required
+      />
+      <button type="submit" id="vault-submit">Unlock →</button>
+    </form>
+    <p id="vault-error" class="vault-error" hidden>비밀번호가 올바르지 않습니다.</p>
+    <div class="vault-lock-footer">
+      <span>AES-256-GCM</span>
+      <span>·</span>
+      <span>PBKDF2</span>
+      <span>·</span>
+      <span>30m Session</span>
+    </div>
+  </div>
 </div>
 
 <div id="vault-unlocked" hidden>
   <div class="vault-toolbar">
     <div id="vault-breadcrumb" class="vault-breadcrumb"></div>
-    <button type="button" id="vault-relock" class="vault-relock-btn">다시 잠그기</button>
+    <div class="vault-toolbar-actions">
+      <span id="vault-session-timer" class="vault-session-timer"></span>
+      <button type="button" id="vault-relock" class="vault-relock-btn">다시 잠그기</button>
+    </div>
   </div>
   <div class="vault-layout">
     <aside class="vault-sidebar">
@@ -39,53 +59,124 @@ layout: default
 <script id="vault-payload" type="text/plain">{{ page.encrypted_payload }}</script>
 
 <style>
-  .vault-box {
-    max-width: 440px;
-    margin: 2.5rem auto;
-    padding: 2rem;
-    border: 1px solid #e5e5e5;
-    border-radius: 12px;
-    background: #fafafa;
-    text-align: center;
+  .vault-lock-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 2.5rem 0 3.5rem 0;
   }
-  .vault-desc {
-    margin-bottom: 1.25rem;
-    color: #262626;
-    font-size: 0.95rem;
+  .vault-card-lock {
+    width: 100%;
+    max-width: 480px;
+    padding: 2.75rem 2.25rem 2.25rem 2.25rem;
+    border-radius: 16px;
+    background: #0a0a0a;
+    border: 1px solid #262626;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.14);
+    text-align: center;
+    color: #fafafa;
+  }
+  .vault-card-lock.shake {
+    animation: vault-shake 0.35s ease;
+  }
+  @keyframes vault-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    50% { transform: translateX(6px); }
+    75% { transform: translateX(-4px); }
+  }
+  .vault-lock-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 1.15rem;
+    border-radius: 50%;
+    background: #171717;
+    border: 1px solid #333333;
+  }
+  .vault-lock-icon {
+    font-size: 1.45rem;
+  }
+  .vault-lock-eyebrow {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #a3a3a3;
+    margin-bottom: 0.45rem;
+  }
+  .vault-lock-title {
+    margin: 0 0 0.65rem 0;
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+  }
+  .vault-lock-desc {
+    margin: 0 0 1.75rem 0;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #a3a3a3;
   }
   .vault-form {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.55rem;
   }
   .vault-form input {
     flex: 1;
-    padding: 0.6rem 0.85rem;
-    border: 1px solid #d4d4d4;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    background: #ffffff;
-    color: #0a0a0a;
-  }
-  .vault-form button {
-    padding: 0.6rem 1.1rem;
-    border: none;
-    border-radius: 8px;
-    background: #0a0a0a;
+    min-width: 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid #333333;
+    border-radius: 9px;
+    background: #171717;
     color: #ffffff;
     font-size: 0.95rem;
-    font-weight: 600;
+    outline: none;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .vault-form input::placeholder {
+    color: #737373;
+  }
+  .vault-form input:focus {
+    border-color: #ffffff;
+    background: #1f1f1f;
+  }
+  .vault-form button {
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #0a0a0a;
+    font-size: 0.94rem;
+    font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.15s ease, background-color 0.15s ease;
   }
   .vault-form button:hover {
-    background: #262626;
+    background: #e5e5e5;
+    transform: translateY(-1px);
   }
   .vault-error {
-    margin-top: 0.85rem;
+    margin-top: 0.95rem;
     margin-bottom: 0;
-    color: #0a0a0a;
+    color: #f87171;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
+  .vault-lock-footer {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.75rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid #262626;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #737373;
+  }
+
   .vault-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -95,6 +186,16 @@ layout: default
     margin-bottom: 1.25rem;
     padding-bottom: 0.85rem;
     border-bottom: 1px solid #e5e5e5;
+  }
+  .vault-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .vault-session-timer {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #737373;
   }
   .vault-breadcrumb {
     display: flex;
@@ -303,23 +404,35 @@ layout: default
       grid-template-columns: 1fr;
     }
   }
+  @media (max-width: 520px) {
+    .vault-form {
+      flex-direction: column;
+    }
+  }
 </style>
 
 <script>
 (function () {
+  const SESSION_KEY = 'vault_session_v1';
+  const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
   const lockBox = document.getElementById('vault-lock');
+  const lockCard = lockBox.querySelector('.vault-card-lock');
   const unlockedBox = document.getElementById('vault-unlocked');
   const form = document.getElementById('vault-form');
   const pwInput = document.getElementById('vault-password');
   const errorEl = document.getElementById('vault-error');
   const breadcrumbEl = document.getElementById('vault-breadcrumb');
+  const timerEl = document.getElementById('vault-session-timer');
   const treeEl = document.getElementById('vault-tree');
   const mainEl = document.getElementById('vault-main');
   const relockBtn = document.getElementById('vault-relock');
   const payloadB64 = document.getElementById('vault-payload').textContent.trim();
+  const payloadSig = payloadB64.slice(0, 32);
 
   let rootPosts = [];
   let selectedPostId = null;
+  let timerInterval = null;
   const expandedMap = {};
 
   function b64ToBytes(b64) {
@@ -358,6 +471,71 @@ layout: default
       dataWithTag
     );
     return JSON.parse(new TextDecoder().decode(decrypted));
+  }
+
+  function saveSession(posts) {
+    try {
+      const data = {
+        sig: payloadSig,
+        expiresAt: Date.now() + SESSION_TTL_MS,
+        posts: posts
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function loadSession() {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || data.sig !== payloadSig || !data.expiresAt || Date.now() >= data.expiresAt) {
+        sessionStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function clearSession() {
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+    } catch (e) {}
+  }
+
+  function lockVault() {
+    clearSession();
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    rootPosts = [];
+    selectedPostId = null;
+    breadcrumbEl.innerHTML = '';
+    treeEl.innerHTML = '';
+    mainEl.innerHTML = '';
+    timerEl.textContent = '';
+    unlockedBox.hidden = true;
+    lockBox.hidden = false;
+    pwInput.value = '';
+  }
+
+  function startSessionTimer(expiresAt) {
+    if (timerInterval) clearInterval(timerInterval);
+    function update() {
+      const rem = expiresAt - Date.now();
+      if (rem <= 0) {
+        lockVault();
+        return;
+      }
+      const mins = Math.floor(rem / 60000);
+      const secs = Math.floor((rem % 60000) / 1000);
+      timerEl.textContent = '세션 ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+    update();
+    timerInterval = setInterval(update, 1000);
   }
 
   function initExpanded(nodes) {
@@ -539,33 +717,42 @@ layout: default
     renderMain(currentPost);
   }
 
+  function openVault(posts, expiresAt) {
+    rootPosts = posts;
+    initExpanded(rootPosts);
+    selectedPostId = rootPosts.length ? rootPosts[0].id : null;
+    render();
+    startSessionTimer(expiresAt);
+    pwInput.value = '';
+    lockBox.hidden = true;
+    unlockedBox.hidden = false;
+  }
+
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     errorEl.hidden = true;
+    lockCard.classList.remove('shake');
     try {
-      rootPosts = await decryptPayload(pwInput.value);
-      initExpanded(rootPosts);
-      selectedPostId = rootPosts.length ? rootPosts[0].id : null;
-      render();
-      pwInput.value = '';
-      lockBox.hidden = true;
-      unlockedBox.hidden = false;
+      const posts = await decryptPayload(pwInput.value);
+      saveSession(posts);
+      openVault(posts, Date.now() + SESSION_TTL_MS);
     } catch (err) {
       errorEl.hidden = false;
+      void lockCard.offsetWidth;
+      lockCard.classList.add('shake');
       pwInput.select();
     }
   });
 
   relockBtn.addEventListener('click', function () {
-    rootPosts = [];
-    selectedPostId = null;
-    breadcrumbEl.innerHTML = '';
-    treeEl.innerHTML = '';
-    mainEl.innerHTML = '';
-    unlockedBox.hidden = true;
-    lockBox.hidden = false;
-    pwInput.value = '';
+    lockVault();
     pwInput.focus();
   });
+
+  // Restore active session if valid
+  const existing = loadSession();
+  if (existing) {
+    openVault(existing.posts, existing.expiresAt);
+  }
 })();
 </script>
