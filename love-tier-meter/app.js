@@ -7,7 +7,8 @@ const state = {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
-    education: null,
+    educationDegree: null,
+    educationTier: null,
     employmentType: null,
     salaryManwon: '',
     housing: null,
@@ -100,6 +101,11 @@ function renderQuestion() {
 
   if (q.type === 'profile') {
     renderProfileStep(q);
+    return;
+  }
+
+  if (q.type === 'education') {
+    renderEducationStep(q);
     return;
   }
 
@@ -291,6 +297,89 @@ function renderProfileStep(q) {
   });
 }
 
+function renderEducationStep(q) {
+  const { educationDegree, educationTier } = state.answers;
+  const selectedDegreeObj = educationDegree !== null ? q.degreeOptions[educationDegree] : null;
+  const showTier = Boolean(selectedDegreeObj && selectedDegreeObj.needsTier);
+
+  quizBody.innerHTML = `
+    <span class="q-step-badge">${q.stepTitle}</span>
+    <h2 class="q-title">${q.title}</h2>
+    <p class="q-desc">${q.desc}</p>
+    <div class="profile-form">
+      <div>
+        <span class="field-label">최종 학력</span>
+        <div class="employment-grid">
+          ${q.degreeOptions
+            .map(
+              (opt, idx) => `
+            <button type="button" class="option-btn ${educationDegree === idx ? 'selected' : ''}" data-deg-idx="${idx}">
+              <span>${opt.label}</span>
+              <span class="option-check">${educationDegree === idx ? '✓' : ''}</span>
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+
+      <div id="univ-tier-wrap" style="display: ${showTier ? 'block' : 'none'};">
+        <span class="field-label">출신 대학 구간 (학부 기준)</span>
+        <div class="options-list">
+          ${q.tierOptions
+            .map(
+              (opt, idx) => `
+            <button type="button" class="option-btn ${educationTier === idx ? 'selected' : ''}" data-tier-idx="${idx}">
+              <span>${opt.label}</span>
+              <span class="option-check">${educationTier === idx ? '✓' : ''}</span>
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+
+      <div id="edu-error" class="error-msg"></div>
+      ${
+        showTier
+          ? `<button type="button" id="btn-edu-next" class="btn-primary" ${educationTier === null ? 'disabled' : ''}>다음 문항으로</button>`
+          : ''
+      }
+    </div>
+  `;
+
+  quizBody.querySelectorAll('[data-deg-idx]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.degIdx);
+      state.answers.educationDegree = idx;
+      if (!q.degreeOptions[idx].needsTier) {
+        state.answers.educationTier = null;
+        goNextStep();
+        return;
+      }
+      renderEducationStep(q);
+    });
+  });
+
+  quizBody.querySelectorAll('[data-tier-idx]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.answers.educationTier = Number(btn.dataset.tierIdx);
+      goNextStep();
+    });
+  });
+
+  const btnEduNext = document.getElementById('btn-edu-next');
+  if (btnEduNext) {
+    btnEduNext.addEventListener('click', () => {
+      if (state.answers.educationTier === null) {
+        document.getElementById('edu-error').textContent = '출신 대학 구간을 선택해 주세요.';
+        return;
+      }
+      goNextStep();
+    });
+  }
+}
+
 function formatSalaryKorean(manwon) {
   if (manwon === 0) return '연 소득 0원 (무소득)';
   const eok = Math.floor(manwon / 10000);
@@ -436,7 +525,8 @@ function evaluateResult() {
     birthYear,
     birthMonth,
     birthDay,
-    education,
+    educationDegree,
+    educationTier,
     employmentType,
     salaryManwon,
     housing,
@@ -448,7 +538,11 @@ function evaluateResult() {
   } = state.answers;
   const { age, zodiac } = calculateAgeAndZodiac(Number(birthYear), Number(birthMonth), Number(birthDay));
 
-  const eduOpt = getQuestionById('education').options[education];
+  const eduQ = getQuestionById('education');
+  const degOpt = eduQ.degreeOptions[educationDegree];
+  const tierOpt = degOpt.needsTier && educationTier !== null ? eduQ.tierOptions[educationTier] : { spec: 0, appeal: 0 };
+  const eduSpec = degOpt.spec + tierOpt.spec;
+  const eduAppeal = degOpt.appeal + tierOpt.appeal;
   const empOpt = getQuestionById('job').employmentOptions[employmentType];
   const salary = Number(salaryManwon) || 0;
   let salarySpec = 2;
@@ -490,8 +584,8 @@ function evaluateResult() {
   }
 
   // 2) 현실 스펙 (학력 + 고용형태 + 연봉 + 주거 + 외모일부 + 나이) -> 100점 환산
-  const rawSpec = eduOpt.spec + empOpt.spec + salarySpec + housingOpt.spec + appOpt.spec + ageScore; // max ~93
-  const specPercent = Math.min(100, Math.round((rawSpec / 93) * 100));
+  const rawSpec = eduSpec + empOpt.spec + salarySpec + housingOpt.spec + appOpt.spec + ageScore; // max ~96
+  const specPercent = Math.min(100, Math.round((rawSpec / 96) * 100));
 
   // 3) 연애 성향 (소비관 + 소통) -> 100점 환산
   const rawLove = spendOpt.love + commOpt.love; // max 34
@@ -508,8 +602,8 @@ function evaluateResult() {
   });
 
   // 5) 시장 호감도 -> 100점 환산
-  const rawAppeal = eduOpt.appeal + empOpt.appeal + salaryAppeal + housingOpt.appeal + appOpt.appeal + spendOpt.appeal + commOpt.appeal - hurdlePenalty * 0.8;
-  const appealPercent = Math.max(10, Math.min(100, Math.round(((rawAppeal + 6) / 63) * 100)));
+  const rawAppeal = eduAppeal + empOpt.appeal + salaryAppeal + housingOpt.appeal + appOpt.appeal + spendOpt.appeal + commOpt.appeal - hurdlePenalty * 0.8;
+  const appealPercent = Math.max(10, Math.min(100, Math.round(((rawAppeal + 6) / 64) * 100)));
 
   // 6) 메타인지(눈높이 균형) -> 100점 환산
   let eyePenalty = 0;
@@ -723,7 +817,8 @@ document.getElementById('btn-retry').addEventListener('click', () => {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
-    education: null,
+    educationDegree: null,
+    educationTier: null,
     employmentType: null,
     salaryManwon: '',
     housing: null,
