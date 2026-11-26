@@ -1,12 +1,13 @@
 // 연애등급측정기 앱 상태 및 판정 엔진
 
+const STORAGE_KEY = 'love_tier_meter_v1';
+
 function pickRandomNickname() {
   return RANDOM_NICKNAMES[Math.floor(Math.random() * RANDOM_NICKNAMES.length)];
 }
 
-const state = {
-  currentStep: 0,
-  answers: {
+function createDefaultAnswers() {
+  return {
     userName: '',
     isNamePrivate: false,
     randomNickname: pickRandomNickname(),
@@ -14,9 +15,12 @@ const state = {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
+    birthAmPm: 'AM',
     birthHour: '',
     birthMinute: '',
     unknownTime: false,
+    bloodType: null,
+    mbti: { ei: null, sn: null, tf: null, jp: null },
     region: '서울',
     heightCm: '',
     weightKg: '',
@@ -38,15 +42,35 @@ const state = {
     exerciseYears: null,
     smoking: null,
     drinking: null,
-    religion: null,
     diet: null,
+    religion: null,
     datingCount: null,
     datingLongest: null,
-    spending: null,
-    communication: null,
     standard: null
-  }
+  };
+}
+
+const state = {
+  currentScreen: 'intro',
+  currentStep: 0,
+  answers: createDefaultAnswers()
 };
+
+let lastResult = null;
+
+function saveAppState() {
+  try {
+    const payload = {
+      screen: state.currentScreen,
+      currentStep: state.currentStep,
+      answers: state.answers,
+      lastResult
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // 저장 공간 제한 시 무시
+  }
+}
 
 // DOM 요소
 const screens = {
@@ -85,9 +109,11 @@ function getGreetingHtml(q) {
 
 function showScreen(name, pushHistory = true) {
   if (name !== 'quiz') clearLifeTimer();
+  state.currentScreen = name;
   Object.values(screens).forEach((el) => el.classList.remove('active'));
   screens[name].classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  saveAppState();
 
   if (pushHistory && !isHandlingPopState) {
     history.pushState({ screen: name, step: state.currentStep }, '');
@@ -249,6 +275,7 @@ function renderQuestion() {
   const percent = Math.round(((state.currentStep + 1) / total) * 100);
   progressText.textContent = `${state.currentStep + 1} / ${total} (${percent}%)`;
   progressFill.style.width = `${percent}%`;
+  saveAppState();
 
   if (q.type === 'profile') return renderProfileStep(q);
   if (q.type === 'body') return renderBodyStep(q);
@@ -257,7 +284,7 @@ function renderQuestion() {
   if (q.type === 'housing') return renderHousingStep(q);
   if (q.type === 'savings') return renderSavingsStep(q);
   if (q.type === 'selfcare') return renderSelfcareStep(q);
-  if (q.type === 'lifestyle') return renderLifestyleStep(q);
+  if (q.type === 'smoking') return renderSmokingStep(q);
   if (q.type === 'dating') return renderDatingStep(q);
 
   if (q.type === 'single') {
@@ -291,6 +318,7 @@ function renderQuestion() {
     quizBody.querySelectorAll('.option-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         state.answers[q.id] = Number(btn.dataset.idx);
+        saveAppState();
         renderQuestion();
       });
     });
@@ -304,6 +332,18 @@ function renderQuestion() {
 }
 
 // 1. 기본 프로필
+function to24Hour(hour12, ampm) {
+  if (ampm === 'PM') return hour12 === 12 ? 12 : hour12 + 12;
+  return hour12 === 12 ? 0 : hour12;
+}
+
+function getMbtiString(mbtiObj) {
+  if (!mbtiObj) return '';
+  const { ei, sn, tf, jp } = mbtiObj;
+  if (!ei || !sn || !tf || !jp) return '';
+  return `${ei}${sn}${tf}${jp}`;
+}
+
 function renderProfileStep(q) {
   const {
     userName,
@@ -313,11 +353,18 @@ function renderProfileStep(q) {
     birthYear,
     birthMonth,
     birthDay,
+    birthAmPm,
     birthHour,
     birthMinute,
     unknownTime,
+    bloodType,
+    mbti,
     region
   } = state.answers;
+
+  const currentYear = new Date().getFullYear();
+  const maxYear = currentYear - 18;
+  const mbtiStr = getMbtiString(mbti);
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
@@ -355,26 +402,30 @@ function renderProfileStep(q) {
         <span class="field-label">생년월일 및 출생 시간</span>
         <div class="birth-grid">
           <div class="birth-input-wrap">
-            <input id="input-year" class="birth-input" type="number" inputmode="numeric" placeholder="0000" value="${birthYear}" />
+            <input id="input-year" class="birth-input" type="text" inputmode="numeric" maxlength="4" placeholder="0000" value="${birthYear}" />
             <span class="birth-unit">년</span>
           </div>
           <div class="birth-input-wrap">
-            <input id="input-month" class="birth-input" type="number" inputmode="numeric" placeholder="00" value="${birthMonth}" />
+            <input id="input-month" class="birth-input" type="text" inputmode="numeric" maxlength="2" placeholder="00" value="${birthMonth}" />
             <span class="birth-unit">월</span>
           </div>
           <div class="birth-input-wrap">
-            <input id="input-day" class="birth-input" type="number" inputmode="numeric" placeholder="00" value="${birthDay}" />
+            <input id="input-day" class="birth-input" type="text" inputmode="numeric" maxlength="2" placeholder="00" value="${birthDay}" />
             <span class="birth-unit">일</span>
           </div>
         </div>
 
         <div id="time-inputs-wrap" class="time-grid" style="display: ${unknownTime ? 'none' : 'grid'};">
+          <div class="ampm-toggle">
+            <button type="button" class="ampm-btn ${birthAmPm === 'AM' ? 'active' : ''}" data-ampm="AM">오전</button>
+            <button type="button" class="ampm-btn ${birthAmPm === 'PM' ? 'active' : ''}" data-ampm="PM">오후</button>
+          </div>
           <div class="birth-input-wrap">
-            <input id="input-hour" class="birth-input" type="number" inputmode="numeric" min="0" max="23" placeholder="00" value="${birthHour}" />
+            <input id="input-hour" class="birth-input" type="text" inputmode="numeric" maxlength="2" placeholder="1~12" value="${birthHour}" />
             <span class="birth-unit">시</span>
           </div>
           <div class="birth-input-wrap">
-            <input id="input-minute" class="birth-input" type="number" inputmode="numeric" min="0" max="59" placeholder="00" value="${birthMinute}" />
+            <input id="input-minute" class="birth-input" type="text" inputmode="numeric" maxlength="2" placeholder="0~59" value="${birthMinute}" />
             <span class="birth-unit">분</span>
           </div>
         </div>
@@ -389,6 +440,39 @@ function renderProfileStep(q) {
         <div id="life-age-line" class="life-age-line"></div>
         <div id="life-timer-line" class="life-timer-line"></div>
         <div id="life-milestone-line" class="life-milestone-line"></div>
+      </div>
+
+      <div>
+        <span class="field-label">혈액형</span>
+        <div class="blood-grid">
+          ${BLOOD_TYPES.map(
+            (bt) => `
+            <button type="button" class="option-btn ${bloodType === bt ? 'selected' : ''}" data-blood="${bt}">
+              <span>${bt}</span>
+              <span class="option-check">${bloodType === bt ? '✓' : ''}</span>
+            </button>`
+          ).join('')}
+        </div>
+      </div>
+
+      <div>
+        <span class="field-label">MBTI ${mbtiStr ? `(${mbtiStr})` : ''}</span>
+        <div class="mbti-axes">
+          ${MBTI_AXES.map(
+            (axis) => `
+            <div class="mbti-row">
+              ${axis.options
+                .map(
+                  (opt) => `
+                <button type="button" class="option-btn mbti-btn ${mbti[axis.key] === opt.code ? 'selected' : ''}" data-mbti-axis="${axis.key}" data-mbti-code="${opt.code}">
+                  <span>${opt.label}</span>
+                  <span class="option-check">${mbti[axis.key] === opt.code ? '✓' : ''}</span>
+                </button>`
+                )
+                .join('')}
+            </div>`
+          ).join('')}
+        </div>
       </div>
 
       <div>
@@ -426,6 +510,7 @@ function renderProfileStep(q) {
   nameEl.addEventListener('input', () => {
     state.answers.userName = nameEl.value;
     errorEl.textContent = '';
+    saveAppState();
   });
 
   chkPrivateEl.addEventListener('change', () => {
@@ -433,8 +518,57 @@ function renderProfileStep(q) {
     if (chkPrivateEl.checked) {
       state.answers.randomNickname = pickRandomNickname();
     }
+    saveAppState();
     renderProfileStep(q);
   });
+
+  function sanitizeYear() {
+    let v = yearEl.value.replace(/\D/g, '').slice(0, 4);
+    if (v.length === 4) {
+      const n = Number(v);
+      if (n > maxYear) v = String(maxYear);
+      else if (n < 1950) v = '1950';
+    }
+    yearEl.value = v;
+  }
+
+  function sanitizeMonth() {
+    let v = monthEl.value.replace(/\D/g, '').slice(0, 2);
+    if (v !== '') {
+      if (v === '00') v = '01';
+      else if (Number(v) > 12) v = '12';
+    }
+    monthEl.value = v;
+  }
+
+  function sanitizeDay() {
+    let v = dayEl.value.replace(/\D/g, '').slice(0, 2);
+    const yNum = Number(yearEl.value);
+    const mNum = Number(monthEl.value);
+    const maxDay = yNum >= 1950 && mNum >= 1 && mNum <= 12 ? new Date(yNum, mNum, 0).getDate() : 31;
+    if (v !== '') {
+      if (v === '00') v = '01';
+      else if (Number(v) > maxDay) v = String(maxDay);
+    }
+    dayEl.value = v;
+  }
+
+  function sanitizeHour() {
+    let v = hourEl.value.replace(/\D/g, '').slice(0, 2);
+    if (v !== '') {
+      if (v === '00') v = '01';
+      else if (Number(v) > 12) v = '12';
+    }
+    hourEl.value = v;
+  }
+
+  function sanitizeMinute() {
+    let v = minEl.value.replace(/\D/g, '').slice(0, 2);
+    if (v !== '' && Number(v) > 59) {
+      v = '59';
+    }
+    minEl.value = v;
+  }
 
   function updateLifeCounter() {
     clearLifeTimer();
@@ -443,6 +577,7 @@ function renderProfileStep(q) {
     state.answers.birthDay = dayEl.value.trim();
     state.answers.birthHour = hourEl.value.trim();
     state.answers.birthMinute = minEl.value.trim();
+    saveAppState();
 
     const check = validateBirthdate(state.answers.birthYear, state.answers.birthMonth, state.answers.birthDay);
     if (!check.valid) {
@@ -461,18 +596,19 @@ function renderProfileStep(q) {
       return;
     }
 
-    const h = state.answers.birthHour === '' ? 0 : Number(state.answers.birthHour);
+    const hRaw = state.answers.birthHour === '' ? 12 : Number(state.answers.birthHour);
     const min = state.answers.birthMinute === '' ? 0 : Number(state.answers.birthMinute);
-    if (Number.isNaN(h) || h < 0 || h > 23 || Number.isNaN(min) || min < 0 || min > 59) {
+    if (Number.isNaN(hRaw) || hRaw < 1 || hRaw > 12 || Number.isNaN(min) || min < 0 || min > 59) {
       timerLineEl.style.display = 'none';
       milestoneLineEl.style.display = 'none';
       return;
     }
 
+    const h24 = to24Hour(hRaw, state.answers.birthAmPm);
     timerLineEl.style.display = 'block';
     milestoneLineEl.style.display = 'block';
 
-    const birthDateTime = new Date(check.y, check.m - 1, check.d, h, min, 0);
+    const birthDateTime = new Date(check.y, check.m - 1, check.d, h24, min, 0);
 
     function tick() {
       const now = new Date();
@@ -484,7 +620,7 @@ function renderProfileStep(q) {
 
       timerLineEl.textContent = `${totalHours.toLocaleString()}시간 ${pad(remMin)}분 ${pad(remSec)}초 인생 사는 중`;
 
-      const ms = getNextMilestoneCountdown(check.y, check.m, check.d, h, min, manAge);
+      const ms = getNextMilestoneCountdown(check.y, check.m, check.d, h24, min, manAge);
       milestoneLineEl.textContent = ms ? ms.text : '';
     }
 
@@ -501,6 +637,40 @@ function renderProfileStep(q) {
         b.querySelector('.option-check').textContent = active ? '✓' : '';
       });
       errorEl.textContent = '';
+      saveAppState();
+    });
+  });
+
+  quizBody.querySelectorAll('[data-ampm]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.answers.birthAmPm = btn.dataset.ampm;
+      quizBody.querySelectorAll('[data-ampm]').forEach((b) => {
+        b.classList.toggle('active', b.dataset.ampm === state.answers.birthAmPm);
+      });
+      updateLifeCounter();
+    });
+  });
+
+  quizBody.querySelectorAll('[data-blood]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.answers.bloodType = btn.dataset.blood;
+      quizBody.querySelectorAll('[data-blood]').forEach((b) => {
+        const active = b.dataset.blood === state.answers.bloodType;
+        b.classList.toggle('selected', active);
+        b.querySelector('.option-check').textContent = active ? '✓' : '';
+      });
+      errorEl.textContent = '';
+      saveAppState();
+    });
+  });
+
+  quizBody.querySelectorAll('[data-mbti-axis]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const axis = btn.dataset.mbtiAxis;
+      const code = btn.dataset.mbtiCode;
+      state.answers.mbti[axis] = code;
+      saveAppState();
+      renderProfileStep(q);
     });
   });
 
@@ -512,13 +682,35 @@ function renderProfileStep(q) {
 
   regionEl.addEventListener('change', () => {
     state.answers.region = regionEl.value;
+    saveAppState();
   });
 
-  [yearEl, monthEl, dayEl, hourEl, minEl].forEach((input) => {
-    input.addEventListener('input', () => {
-      errorEl.textContent = '';
-      updateLifeCounter();
-    });
+  yearEl.addEventListener('input', () => {
+    sanitizeYear();
+    sanitizeDay();
+    errorEl.textContent = '';
+    updateLifeCounter();
+  });
+  monthEl.addEventListener('input', () => {
+    sanitizeMonth();
+    sanitizeDay();
+    errorEl.textContent = '';
+    updateLifeCounter();
+  });
+  dayEl.addEventListener('input', () => {
+    sanitizeDay();
+    errorEl.textContent = '';
+    updateLifeCounter();
+  });
+  hourEl.addEventListener('input', () => {
+    sanitizeHour();
+    errorEl.textContent = '';
+    updateLifeCounter();
+  });
+  minEl.addEventListener('input', () => {
+    sanitizeMinute();
+    errorEl.textContent = '';
+    updateLifeCounter();
   });
 
   updateLifeCounter();
@@ -540,14 +732,22 @@ function renderProfileStep(q) {
     if (!state.answers.unknownTime) {
       const hStr = hourEl.value.trim();
       const mStr = minEl.value.trim();
-      if (hStr !== '' && (Number(hStr) < 0 || Number(hStr) > 23)) {
-        errorEl.textContent = '출생 시는 0~23 사이로 입력해 주세요.';
+      if (hStr !== '' && (Number(hStr) < 1 || Number(hStr) > 12)) {
+        errorEl.textContent = '출생 시는 오전/오후 기준 1~12 사이로 입력해 주세요.';
         return;
       }
       if (mStr !== '' && (Number(mStr) < 0 || Number(mStr) > 59)) {
         errorEl.textContent = '출생 분은 0~59 사이로 입력해 주세요.';
         return;
       }
+    }
+    if (!state.answers.bloodType) {
+      errorEl.textContent = '혈액형을 선택해 주세요.';
+      return;
+    }
+    if (!getMbtiString(state.answers.mbti)) {
+      errorEl.textContent = 'MBTI 4가지 성향을 모두 선택해 주세요.';
+      return;
     }
     goNextStep();
   });
@@ -640,6 +840,7 @@ function renderBodyStep(q) {
   function updateBodyPreview() {
     state.answers.heightCm = heightEl.value.trim();
     state.answers.weightKg = weightEl.value.trim();
+    saveAppState();
     const h = Number(state.answers.heightCm);
     const w = Number(state.answers.weightKg);
     if (h >= 120 && h <= 230 && w >= 30 && w <= 220) {
@@ -735,6 +936,7 @@ function renderEducationStep(q) {
       if (!q.degreeOptions[idx].needsTier) {
         state.answers.educationTier = null;
       }
+      saveAppState();
       renderEducationStep(q);
     });
   });
@@ -742,6 +944,7 @@ function renderEducationStep(q) {
   quizBody.querySelectorAll('[data-tier-idx]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.answers.educationTier = Number(btn.dataset.tierIdx);
+      saveAppState();
       renderEducationStep(q);
     });
   });
@@ -863,6 +1066,7 @@ function renderJobStep(q) {
     const rawI = incEl.value.trim();
     state.answers.salaryManwon = rawS;
     state.answers.incentiveManwon = rawI;
+    saveAppState();
 
     if (rawS === '' && rawI === '') {
       compareBox.style.display = 'none';
@@ -885,6 +1089,7 @@ function renderJobStep(q) {
     btn.addEventListener('click', () => {
       const idx = Number(btn.dataset.empIdx);
       state.answers.employmentType = idx;
+      saveAppState();
       quizBody.querySelectorAll('[data-emp-idx]').forEach((b) => {
         const active = Number(b.dataset.empIdx) === idx;
         b.classList.toggle('selected', active);
@@ -968,6 +1173,7 @@ function renderHousingStep(q) {
   quizBody.querySelectorAll('[data-house-idx]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.answers.housingType = Number(btn.dataset.houseIdx);
+      saveAppState();
       renderHousingStep(q);
     });
   });
@@ -976,6 +1182,7 @@ function renderHousingStep(q) {
     costEl.addEventListener('input', () => {
       state.answers.housingCostManwon = costEl.value.trim();
       errorEl.textContent = '';
+      saveAppState();
     });
   }
 
@@ -1065,6 +1272,7 @@ function renderSavingsStep(q) {
     state.answers.pensionManwon = pensionEl.value.trim();
     state.answers.investManwon = investEl.value.trim();
     state.answers.debtManwon = debtEl.value.trim();
+    saveAppState();
 
     const net =
       (Number(state.answers.cashManwon) || 0) +
@@ -1084,10 +1292,12 @@ function renderSavingsStep(q) {
   bindBackButtons();
 }
 
-// 8. 자기관리 - 운동
+// 8. 자기관리 - 운동 (거의 안함 시 하위 문항 숨김)
 function renderSelfcareStep(q) {
   const { exerciseFreq, exerciseDuration, exerciseYears } = state.answers;
-  const canProceed = exerciseFreq !== null && exerciseDuration !== null && exerciseYears !== null;
+  const isNoExercise = exerciseFreq === 0;
+  const canProceed =
+    exerciseFreq !== null && (isNoExercise || (exerciseDuration !== null && exerciseYears !== null));
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
@@ -1110,7 +1320,7 @@ function renderSelfcareStep(q) {
         </div>
       </div>
 
-      <div class="sub-group">
+      <div class="sub-group" style="display: ${isNoExercise ? 'none' : 'block'};">
         <span class="field-label">1회 운동 시간</span>
         <div class="employment-grid">
           ${q.durationOptions
@@ -1125,7 +1335,7 @@ function renderSelfcareStep(q) {
         </div>
       </div>
 
-      <div class="sub-group">
+      <div class="sub-group" style="display: ${isNoExercise ? 'none' : 'block'};">
         <span class="field-label">꾸준히 한 운동 기간</span>
         <div class="employment-grid">
           ${q.yearsOptions
@@ -1149,19 +1359,27 @@ function renderSelfcareStep(q) {
 
   quizBody.querySelectorAll('[data-freq-idx]').forEach((b) =>
     b.addEventListener('click', () => {
-      state.answers.exerciseFreq = Number(b.dataset.freqIdx);
+      const idx = Number(b.dataset.freqIdx);
+      state.answers.exerciseFreq = idx;
+      if (idx === 0) {
+        state.answers.exerciseDuration = null;
+        state.answers.exerciseYears = null;
+      }
+      saveAppState();
       renderSelfcareStep(q);
     })
   );
   quizBody.querySelectorAll('[data-dur-idx]').forEach((b) =>
     b.addEventListener('click', () => {
       state.answers.exerciseDuration = Number(b.dataset.durIdx);
+      saveAppState();
       renderSelfcareStep(q);
     })
   );
   quizBody.querySelectorAll('[data-yrs-idx]').forEach((b) =>
     b.addEventListener('click', () => {
       state.answers.exerciseYears = Number(b.dataset.yrsIdx);
+      saveAppState();
       renderSelfcareStep(q);
     })
   );
@@ -1172,10 +1390,10 @@ function renderSelfcareStep(q) {
   bindBackButtons();
 }
 
-// 9. 자기관리 - 생활습관
-function renderLifestyleStep(q) {
-  const { smoking, drinking, religion, diet } = state.answers;
-  const canProceed = smoking !== null && drinking !== null && religion !== null && diet !== null;
+// 9. 자기관리 - 흡연 (2x2: 좌측 병합 비흡연, 우측 상단 연초, 우측 하단 전자담배)
+function renderSmokingStep(q) {
+  const { smoking } = state.answers;
+  const canProceed = smoking !== null;
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
@@ -1183,69 +1401,25 @@ function renderLifestyleStep(q) {
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
-      <div>
-        <span class="field-label">흡연 유무</span>
-        <div class="options-list">
-          ${q.smokingOptions
-            .map(
-              (opt, idx) => `
-            <button type="button" class="option-btn ${smoking === idx ? 'selected' : ''}" data-smk="${idx}">
-              <span>${opt.label}</span>
-              <span class="option-check">${smoking === idx ? '✓' : ''}</span>
-            </button>`
-            )
-            .join('')}
-        </div>
+      <div class="smoking-grid">
+        <button type="button" class="option-btn smoking-non ${smoking === 0 ? 'selected' : ''}" data-smk="0">
+          <span style="font-size:28px;line-height:1;">🚭</span>
+          <span>${q.options[0].label}</span>
+          <span class="option-check">${smoking === 0 ? '✓' : ''}</span>
+        </button>
+        <button type="button" class="option-btn ${smoking === 1 ? 'selected' : ''}" data-smk="1">
+          <span>🚬 ${q.options[1].label}</span>
+          <span class="option-check">${smoking === 1 ? '✓' : ''}</span>
+        </button>
+        <button type="button" class="option-btn ${smoking === 2 ? 'selected' : ''}" data-smk="2">
+          <span>💨 ${q.options[2].label}</span>
+          <span class="option-check">${smoking === 2 ? '✓' : ''}</span>
+        </button>
       </div>
 
-      <div>
-        <span class="field-label">음주 주 횟수</span>
-        <div class="employment-grid">
-          ${q.drinkingOptions
-            .map(
-              (opt, idx) => `
-            <button type="button" class="option-btn ${drinking === idx ? 'selected' : ''}" data-drk="${idx}">
-              <span>${opt.label}</span>
-              <span class="option-check">${drinking === idx ? '✓' : ''}</span>
-            </button>`
-            )
-            .join('')}
-        </div>
-      </div>
-
-      <div>
-        <span class="field-label">종교 유무</span>
-        <div class="options-list">
-          ${q.religionOptions
-            .map(
-              (opt, idx) => `
-            <button type="button" class="option-btn ${religion === idx ? 'selected' : ''}" data-rel="${idx}">
-              <span>${opt.label}</span>
-              <span class="option-check">${religion === idx ? '✓' : ''}</span>
-            </button>`
-            )
-            .join('')}
-        </div>
-      </div>
-
-      <div>
-        <span class="field-label">식단 성향 · 식습관</span>
-        <div class="options-list">
-          ${q.dietOptions
-            .map(
-              (opt, idx) => `
-            <button type="button" class="option-btn ${diet === idx ? 'selected' : ''}" data-diet="${idx}">
-              <span>${opt.label}</span>
-              <span class="option-check">${diet === idx ? '✓' : ''}</span>
-            </button>`
-            )
-            .join('')}
-        </div>
-      </div>
-
-      <div class="quiz-nav-row">
+      <div class="quiz-nav-row" style="margin-top: 10px;">
         <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
-        <button type="button" id="btn-life-next" class="btn-primary" ${canProceed ? '' : 'disabled'}>다음 문항으로</button>
+        <button type="button" id="btn-smoking-next" class="btn-primary" ${canProceed ? '' : 'disabled'}>다음 문항으로</button>
       </div>
     </div>
   `;
@@ -1253,38 +1427,22 @@ function renderLifestyleStep(q) {
   quizBody.querySelectorAll('[data-smk]').forEach((b) =>
     b.addEventListener('click', () => {
       state.answers.smoking = Number(b.dataset.smk);
-      renderLifestyleStep(q);
-    })
-  );
-  quizBody.querySelectorAll('[data-drk]').forEach((b) =>
-    b.addEventListener('click', () => {
-      state.answers.drinking = Number(b.dataset.drk);
-      renderLifestyleStep(q);
-    })
-  );
-  quizBody.querySelectorAll('[data-rel]').forEach((b) =>
-    b.addEventListener('click', () => {
-      state.answers.religion = Number(b.dataset.rel);
-      renderLifestyleStep(q);
-    })
-  );
-  quizBody.querySelectorAll('[data-diet]').forEach((b) =>
-    b.addEventListener('click', () => {
-      state.answers.diet = Number(b.dataset.diet);
-      renderLifestyleStep(q);
+      saveAppState();
+      renderSmokingStep(q);
     })
   );
 
-  document.getElementById('btn-life-next').addEventListener('click', () => {
+  document.getElementById('btn-smoking-next').addEventListener('click', () => {
     if (canProceed) goNextStep();
   });
   bindBackButtons();
 }
 
-// 10. 연애 이력
+// 10. 연애 이력 (0회 시 최장기간 숨김)
 function renderDatingStep(q) {
   const { datingCount, datingLongest } = state.answers;
-  const canProceed = datingCount !== null && datingLongest !== null;
+  const isNoDating = datingCount === 0;
+  const canProceed = datingCount !== null && (isNoDating || datingLongest !== null);
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
@@ -1307,7 +1465,7 @@ function renderDatingStep(q) {
         </div>
       </div>
 
-      <div>
+      <div style="display: ${isNoDating ? 'none' : 'block'};">
         <span class="field-label">연애 최장기간</span>
         <div class="options-list">
           ${q.longestOptions
@@ -1331,13 +1489,19 @@ function renderDatingStep(q) {
 
   quizBody.querySelectorAll('[data-dc]').forEach((b) =>
     b.addEventListener('click', () => {
-      state.answers.datingCount = Number(b.dataset.dc);
+      const idx = Number(b.dataset.dc);
+      state.answers.datingCount = idx;
+      if (idx === 0) {
+        state.answers.datingLongest = null;
+      }
+      saveAppState();
       renderDatingStep(q);
     })
   );
   quizBody.querySelectorAll('[data-dl]').forEach((b) =>
     b.addEventListener('click', () => {
       state.answers.datingLongest = Number(b.dataset.dl);
+      saveAppState();
       renderDatingStep(q);
     })
   );
@@ -1486,29 +1650,27 @@ function evaluateResult() {
   // 지표 2: 자기관리 · 생활
   const selfQ = getQuestionById('selfcare');
   const freqOpt = selfQ.freqOptions[a.exerciseFreq];
-  const durOpt = selfQ.durationOptions[a.exerciseDuration];
-  const yrsOpt = selfQ.yearsOptions[a.exerciseYears];
-  const exScore = freqOpt.score + durOpt.score + yrsOpt.score;
+  const isNoExercise = a.exerciseFreq === 0;
+  const durOpt = !isNoExercise && a.exerciseDuration !== null ? selfQ.durationOptions[a.exerciseDuration] : null;
+  const yrsOpt = !isNoExercise && a.exerciseYears !== null ? selfQ.yearsOptions[a.exerciseYears] : null;
+  const exScore = freqOpt.score + (durOpt ? durOpt.score : 0) + (yrsOpt ? yrsOpt.score : 0);
 
-  const lifeQ = getQuestionById('lifestyle');
-  const smkOpt = lifeQ.smokingOptions[a.smoking];
-  const drkOpt = lifeQ.drinkingOptions[a.drinking];
-  const relOpt = lifeQ.religionOptions[a.religion];
-  const dietOpt = lifeQ.dietOptions[a.diet];
+  const smkOpt = getQuestionById('smoking').options[a.smoking];
+  const drkOpt = getQuestionById('drinking').options[a.drinking];
+  const dietOpt = getQuestionById('diet').options[a.diet];
+  const relOpt = getQuestionById('religion').options[a.religion];
   const hurdlePenalty = smkOpt.penalty + drkOpt.penalty + relOpt.penalty + dietOpt.penalty;
   const hurdleTags = [smkOpt.tag, drkOpt.tag, relOpt.tag, dietOpt.tag].filter(Boolean);
 
   const selfcarePercent = Math.max(10, Math.min(100, Math.round(((exScore + 25 - hurdlePenalty * 1.4) / 60) * 100)));
 
-  // 지표 3: 연애 내공 · 성향
+  // 지표 3: 연애 이력
   const datQ = getQuestionById('dating');
   const dcOpt = datQ.countOptions[a.datingCount];
-  const dlOpt = datQ.longestOptions[a.datingLongest];
-  const datingExpScore = dcOpt.score + dlOpt.score;
-  const spendOpt = getQuestionById('spending').options[a.spending];
-  const commOpt = getQuestionById('communication').options[a.communication];
-  const rawLove = datingExpScore + spendOpt.love + commOpt.love;
-  const lovePercent = Math.max(10, Math.min(100, Math.round((rawLove / 59) * 100)));
+  const isNoDating = a.datingCount === 0;
+  const dlOpt = !isNoDating && a.datingLongest !== null ? datQ.longestOptions[a.datingLongest] : null;
+  const datingExpScore = dcOpt.score + (dlOpt ? dlOpt.score : 2);
+  const lovePercent = Math.max(15, Math.min(100, Math.round((datingExpScore / 25) * 100)));
 
   // 지표 4: 메타인지
   const stdOpt = getQuestionById('standard').options[a.standard];
@@ -1524,14 +1686,16 @@ function evaluateResult() {
     15,
     Math.min(
       98,
-      Math.round(assetSpecPercent * 0.45 + selfcarePercent * 0.22 + lovePercent * 0.23 + metaPercent * 0.1 - hurdlePenalty * 0.4)
+      Math.round(assetSpecPercent * 0.48 + selfcarePercent * 0.24 + lovePercent * 0.16 + metaPercent * 0.12 - hurdlePenalty * 0.4)
     )
   );
 
   const tierObj = resolveSubTier(totalScore);
+  const mbtiStr = getMbtiString(a.mbti) || '-';
 
   const summaryItems = [
     { key: '이름', val: `${displayName}${a.isNamePrivate ? ' (비공개)' : ''}` },
+    { key: '혈액형 · MBTI', val: `${a.bloodType || '-'} · ${mbtiStr}` },
     { key: '거주지', val: a.region },
     { key: '신체 · BMI', val: `${h}cm · ${w}kg (${bmi.toFixed(1)} · ${getBmiCategory(bmi)})` },
     { key: '최종 학력', val: tierOpt ? `${degOpt.label} (${tierOpt.label.split(' ')[0]})` : degOpt.label },
@@ -1539,12 +1703,11 @@ function evaluateResult() {
     { key: '소득 (세전 / 월 실수령)', val: `${formatManwonKorean(grossSalary)} / 월 ${formatManwonKorean(monthlyNet)}` },
     { key: '부동산 · 주거비', val: `${houseOpt.label} (월 ${houseCost}만원)` },
     { key: '순 금융자산', val: formatManwonKorean(netFinancial) },
-    { key: '자차 소유', val: hasCar ? `[✓] ${carOpt.label}` : `[ ] 없음` },
-    { key: '운동 습관', val: `${freqOpt.label} · ${durOpt.label} (${yrsOpt.label})` },
+    { key: '자차 소유', val: hasCar ? carOpt.label : '없음', checkbox: true, checked: hasCar },
+    { key: '운동 습관', val: isNoExercise ? freqOpt.label : `${freqOpt.label} · ${durOpt.label} (${yrsOpt.label})` },
     { key: '흡연 · 음주', val: `${smkOpt.label} · ${drkOpt.label}` },
-    { key: '종교 · 식단', val: `${relOpt.label.split(' ')[0]} · ${dietOpt.label.split(' ')[0]}` },
-    { key: '연애 이력', val: `${dcOpt.label} (최장 ${dlOpt.label})` },
-    { key: '소비 · 소통', val: `${spendOpt.label.slice(0, 12)}…` }
+    { key: '식단 · 종교', val: `${dietOpt.label.split(' ')[0]} · ${relOpt.label.split(' ')[0]}` },
+    { key: '연애 이력', val: isNoDating ? dcOpt.label : `${dcOpt.label} (최장 ${dlOpt.label})` }
   ];
 
   return {
@@ -1562,14 +1725,12 @@ function evaluateResult() {
     summaryItems,
     metrics: [
       { label: '자산 · 스펙 (부동산·저축·소득·피지컬)', score: assetSpecPercent },
-      { label: '자기관리 · 생활 (운동·생활습관)', score: selfcarePercent },
-      { label: '연애 내공 · 성향 (경험·소비·소통)', score: lovePercent },
+      { label: '자기관리 · 생활 (운동·흡연·음주·식단)', score: selfcarePercent },
+      { label: '연애 이력 (경험·최장기간)', score: lovePercent },
       { label: '메타인지 (눈높이 균형)', score: metaPercent }
     ]
   };
 }
-
-let lastResult = null;
 
 function renderResult(res) {
   lastResult = res;
@@ -1614,92 +1775,248 @@ function renderResult(res) {
 
   const summarySheetEl = document.getElementById('res-summary-sheet');
   summarySheetEl.innerHTML = res.summaryItems
-    .map(
-      (item) => `
+    .map((item) => {
+      const valHtml = item.checkbox
+        ? `<span class="resume-check ${item.checked ? 'checked' : ''}">${item.checked ? '✓' : ''}</span><span>${item.val}</span>`
+        : item.val;
+      return `
       <div class="summary-item">
         <span class="summary-key">${item.key}</span>
-        <span class="summary-val">${item.val}</span>
+        <span class="summary-val">${valHtml}</span>
       </div>
-    `
-    )
+    `;
+    })
     .join('');
+  saveAppState();
 }
 
-// 결과 카드 PNG 저장
+// 결과 카드 전체 PNG 저장
+function getWrappedLines(ctx, text, maxWidth) {
+  const chars = text.split('');
+  const lines = [];
+  let line = '';
+  for (let i = 0; i < chars.length; i += 1) {
+    const testLine = line + chars[i];
+    if (ctx.measureText(testLine).width > maxWidth && i > 0) {
+      lines.push(line);
+      line = chars[i];
+    } else {
+      line = testLine;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 document.getElementById('btn-save-img').addEventListener('click', () => {
   if (!lastResult) return;
+  const profile = TIER_PROFILES[lastResult.baseTier];
+
+  let extraComment = profile.comment;
+  if (lastResult.hurdleTags.length > 0) {
+    extraComment += ` 특히 [${lastResult.hurdleTags.join(', ')}] 요소가 매칭 풀을 좁히는 요인으로 작용했습니다.`;
+  }
+  if (lastResult.eyePenalty > 0) {
+    extraComment += ' 본인 조건 대비 희망 기준이 높게 설정되어 감점이 발생했습니다.';
+  }
+  const adviceText = `💡 매니저 처방: ${profile.advice}`;
+
   const canvas = document.createElement('canvas');
-  canvas.width = 720;
-  canvas.height = 900;
+  canvas.width = 820;
   const ctx = canvas.getContext('2d');
+
+  // 텍스트 줄바꿈 사전 계산
+  ctx.font = 'bold 19px sans-serif';
+  const headlineLines = getWrappedLines(ctx, profile.headline, 460);
+  ctx.font = '500 15px sans-serif';
+  const commentLines = getWrappedLines(ctx, extraComment, 460);
+  const adviceLines = getWrappedLines(ctx, adviceText, 460);
+
+  const verdictHeight = Math.max(
+    175,
+    36 + headlineLines.length * 26 + 10 + commentLines.length * 22 + 12 + adviceLines.length * 22 + 20
+  );
+  const metricsTop = 180 + verdictHeight + 36;
+  const metricsHeight = lastResult.metrics.length * 56;
+  const summaryRows = Math.ceil(lastResult.summaryItems.length / 2);
+  const summaryTop = metricsTop + metricsHeight + 38;
+  const summaryHeight = summaryRows * 42 + 44;
+  const cardHeight = summaryTop + summaryHeight + 50;
+
+  canvas.height = cardHeight + 60;
 
   ctx.fillStyle = '#f4f5f7';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = '#ffffff';
-  roundRect(ctx, 40, 40, 640, 820, 28);
+  roundRect(ctx, 30, 30, 760, cardHeight, 26);
   ctx.fill();
 
+  // 헤더
   ctx.fillStyle = '#1c2434';
-  ctx.font = 'bold 20px sans-serif';
-  ctx.fillText('연애등급측정기 · 결정사 모의 판정', 80, 105);
+  ctx.font = 'bold 22px sans-serif';
+  ctx.fillText('결정사 모의 판정 리포트', 64, 84);
 
   ctx.fillStyle = '#5f6673';
-  ctx.font = '600 17px sans-serif';
+  ctx.font = '600 15px sans-serif';
   ctx.fillText(
-    `${lastResult.zodiac.emoji} ${lastResult.displayName} · 만 ${lastResult.manAge}세 · ${lastResult.genderLabel} · ${lastResult.region} (${lastResult.totalScore}점)`,
-    80,
-    140
+    `${lastResult.zodiac.emoji} ${lastResult.displayName} · 만 ${lastResult.manAge}세(연 ${lastResult.yearAge}) · ${lastResult.genderLabel} · ${lastResult.region}`,
+    64,
+    114
   );
 
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#8b92a0';
+  ctx.font = '700 14px sans-serif';
+  ctx.fillText(`SCORE ${lastResult.totalScore} / 100`, 756, 84);
+  ctx.textAlign = 'left';
+
+  ctx.strokeStyle = '#e3e6ec';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(64, 134);
+  ctx.lineTo(756, 134);
+  ctx.stroke();
+
+  // 상단 1줄: 좌측 등급 배지 + 우측 피드백/조언
   const tierColors = { S: '#7c3aed', A: '#2563eb', B: '#059669', C: '#d97706', D: '#dc2626' };
   ctx.fillStyle = tierColors[lastResult.baseTier];
-  roundRect(ctx, 80, 175, 560, 165, 22);
+  roundRect(ctx, 64, 156, 180, verdictHeight, 18);
   ctx.fill();
+
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillText('결정사 모의 판정 등급', 360, 215);
-  ctx.font = 'bold 72px sans-serif';
-  ctx.fillText(lastResult.actualTier, 360, 288);
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillText(TIER_PROFILES[lastResult.baseTier].label, 360, 322);
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('판정 등급', 154, 156 + verdictHeight * 0.25);
+  ctx.font = 'bold 58px sans-serif';
+  ctx.fillText(lastResult.actualTier, 154, 156 + verdictHeight * 0.62);
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(profile.label, 154, 156 + verdictHeight * 0.83);
 
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#181c23';
-  ctx.font = 'bold 22px sans-serif';
-  const headline = TIER_PROFILES[lastResult.baseTier].headline;
-  wrapText(ctx, headline, 80, 390, 560, 32);
+  ctx.fillStyle = '#f8f9fb';
+  roundRect(ctx, 260, 156, 496, verdictHeight, 18);
+  ctx.fill();
 
-  let y = 490;
+  let vy = 188;
+  ctx.fillStyle = '#181c23';
+  ctx.font = 'bold 19px sans-serif';
+  headlineLines.forEach((ln) => {
+    ctx.fillText(ln, 280, vy);
+    vy += 26;
+  });
+
+  vy += 6;
+  ctx.fillStyle = '#5f6673';
+  ctx.font = '500 15px sans-serif';
+  commentLines.forEach((ln) => {
+    ctx.fillText(ln, 280, vy);
+    vy += 22;
+  });
+
+  vy += 8;
+  ctx.fillStyle = '#1c2434';
+  ctx.font = '600 14.5px sans-serif';
+  adviceLines.forEach((ln) => {
+    ctx.fillText(ln, 280, vy);
+    vy += 22;
+  });
+
+  // 항목별 평가 점수
+  ctx.fillStyle = '#181c23';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('항목별 평가 점수', 64, metricsTop - 16);
+
+  let my = metricsTop + 8;
   lastResult.metrics.forEach((m) => {
     ctx.fillStyle = '#181c23';
-    ctx.font = '600 17px sans-serif';
-    ctx.fillText(m.label, 80, y);
+    ctx.font = '600 14.5px sans-serif';
+    ctx.fillText(m.label, 64, my);
     ctx.textAlign = 'right';
-    ctx.fillText(`${m.score}점`, 640, y);
+    ctx.fillText(`${m.score}점`, 756, my);
     ctx.textAlign = 'left';
 
     ctx.fillStyle = '#ebeef3';
-    roundRect(ctx, 80, y + 12, 560, 14, 7);
+    roundRect(ctx, 64, my + 10, 692, 10, 5);
     ctx.fill();
 
     ctx.fillStyle = '#1c2434';
-    roundRect(ctx, 80, y + 12, (560 * m.score) / 100, 14, 7);
+    roundRect(ctx, 64, my + 10, (692 * m.score) / 100, 10, 5);
     ctx.fill();
-    y += 72;
+    my += 54;
   });
 
-  ctx.fillStyle = '#8b92a0';
-  ctx.font = '500 16px sans-serif';
+  // 입력 정보 종합 프로필 (이력서 스타일)
+  ctx.fillStyle = '#181c23';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('입력 정보 종합 프로필', 64, summaryTop);
+
+  ctx.strokeStyle = '#1c2434';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(64, summaryTop + 14);
+  ctx.lineTo(756, summaryTop + 14);
+  ctx.stroke();
+
+  const colW = 334;
+  const colGap = 24;
+  lastResult.summaryItems.forEach((item, idx) => {
+    const col = idx % 2;
+    const row = Math.floor(idx / 2);
+    const x = 64 + col * (colW + colGap);
+    const y = summaryTop + 44 + row * 42;
+
+    ctx.fillStyle = '#5f6673';
+    ctx.font = '600 13.5px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(item.key, x, y);
+
+    ctx.fillStyle = '#181c23';
+    ctx.font = '700 13.5px sans-serif';
+    ctx.textAlign = 'right';
+    if (item.checkbox) {
+      const textW = ctx.measureText(item.val).width;
+      const boxX = x + colW - textW - 22;
+      const boxY = y - 12;
+      ctx.strokeStyle = item.checked ? '#1c2434' : '#9aa1ae';
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, boxX, boxY, 15, 15, 3);
+      if (item.checked) {
+        ctx.fillStyle = '#1c2434';
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('✓', boxX + 7.5, boxY + 12);
+        ctx.fillStyle = '#181c23';
+        ctx.font = '700 13.5px sans-serif';
+        ctx.textAlign = 'right';
+      } else {
+        ctx.stroke();
+      }
+      ctx.fillText(item.val, x + colW, y);
+    } else {
+      ctx.fillText(item.val, x + colW, y);
+    }
+
+    ctx.strokeStyle = '#e3e6ec';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y + 12);
+    ctx.lineTo(x + colW, y + 12);
+    ctx.stroke();
+  });
+
   ctx.textAlign = 'center';
-  ctx.fillText('나도 측정해보기 · 연애등급측정기', 360, 825);
+  ctx.fillStyle = '#8b92a0';
+  ctx.font = '500 14px sans-serif';
+  ctx.fillText('나도 측정해보기 · 연애등급측정기', 410, cardHeight + 6);
 
   const link = document.createElement('a');
   link.download = `연애등급측정기_결과_${lastResult.actualTier}등급.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
-  showToast('결과 카드 이미지를 저장했습니다!');
+  showToast('결과 카드 전체 이미지를 저장했습니다!');
 });
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -1747,49 +2064,51 @@ document.getElementById('btn-result-back').addEventListener('click', () => {
   renderQuestion();
 });
 
-// 다시 하기
-document.getElementById('btn-retry').addEventListener('click', () => {
+// 전체 초기화 및 복원
+function resetAllData() {
   clearLifeTimer();
   state.currentStep = 0;
-  state.answers = {
-    userName: '',
-    isNamePrivate: false,
-    randomNickname: pickRandomNickname(),
-    gender: null,
-    birthYear: '',
-    birthMonth: '',
-    birthDay: '',
-    birthHour: '',
-    birthMinute: '',
-    unknownTime: false,
-    region: '서울',
-    heightCm: '',
-    weightKg: '',
-    educationDegree: null,
-    educationTier: null,
-    employmentType: null,
-    salaryManwon: '',
-    incentiveManwon: '',
-    housingType: null,
-    housingCostManwon: '',
-    cashManwon: '',
-    isaManwon: '',
-    pensionManwon: '',
-    investManwon: '',
-    debtManwon: '',
-    car: null,
-    exerciseFreq: null,
-    exerciseDuration: null,
-    exerciseYears: null,
-    smoking: null,
-    drinking: null,
-    religion: null,
-    diet: null,
-    datingCount: null,
-    datingLongest: null,
-    spending: null,
-    communication: null,
-    standard: null
-  };
+  state.answers = createDefaultAnswers();
+  lastResult = null;
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // 무시
+  }
   showScreen('intro');
-});
+  showToast('모든 입력 데이터가 초기화되었습니다.');
+}
+
+document.getElementById('btn-reset-all').addEventListener('click', resetAllData);
+document.getElementById('btn-retry').addEventListener('click', resetAllData);
+
+function restoreAppState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved || typeof saved !== 'object') return;
+
+    const defaults = createDefaultAnswers();
+    const mergedAnswers = { ...defaults, ...(saved.answers || {}) };
+    mergedAnswers.mbti = { ...defaults.mbti, ...((saved.answers && saved.answers.mbti) || {}) };
+    state.answers = mergedAnswers;
+
+    const step = Number(saved.currentStep);
+    state.currentStep = Number.isFinite(step) ? Math.max(0, Math.min(QUESTIONS.length - 1, step)) : 0;
+
+    if (saved.screen === 'result' && saved.lastResult) {
+      renderResult(saved.lastResult);
+      showScreen('result', false);
+      history.replaceState({ screen: 'result', step: state.currentStep }, '');
+    } else if (saved.screen === 'quiz') {
+      showScreen('quiz', false);
+      renderQuestion();
+      history.replaceState({ screen: 'quiz', step: state.currentStep }, '');
+    }
+  } catch {
+    // 손상된 로컬 데이터 무시
+  }
+}
+
+restoreAppState();

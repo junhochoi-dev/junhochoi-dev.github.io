@@ -64,6 +64,15 @@ const TIER_PROFILES = {
   }
 };
 
+const BLOOD_TYPES = ['A형', 'B형', 'O형', 'AB형'];
+
+const MBTI_AXES = [
+  { key: 'ei', options: [{ code: 'E', label: 'E · 외향' }, { code: 'I', label: 'I · 내향' }] },
+  { key: 'sn', options: [{ code: 'S', label: 'S · 감각' }, { code: 'N', label: 'N · 직관' }] },
+  { key: 'tf', options: [{ code: 'T', label: 'T · 사고' }, { code: 'F', label: 'F · 감정' }] },
+  { key: 'jp', options: [{ code: 'J', label: 'J · 계획' }, { code: 'P', label: 'P · 인식' }] }
+];
+
 const REGIONS = [
   '서울', '경기 · 인천', '부산', '대구', '광주', '대전', '울산', '세종',
   '강원', '충청', '전라', '경상', '제주', '해외'
@@ -74,8 +83,8 @@ const QUESTIONS = [
     id: 'profile',
     stepTitle: '기본 프로필',
     askTopic: '기본 프로필',
-    title: '성별과 출생 정보, 거주지를 알려주세요',
-    desc: '만 나이·연 나이와 12지신, 실시간 인생 카운터를 계산합니다.',
+    title: '성별과 출생 정보, 성향·거주지를 알려주세요',
+    desc: '만 나이·연 나이와 12지신, 실시간 인생 카운터, 혈액형·MBTI를 반영합니다.',
     type: 'profile'
   },
   {
@@ -183,32 +192,53 @@ const QUESTIONS = [
     ]
   },
   {
-    id: 'lifestyle',
-    stepTitle: '자기관리 · 생활습관',
-    title: '흡연·음주·종교·식단 성향을 선택해 주세요',
-    desc: '매칭 시 상대방과의 생활 궁합 및 타협 난이도를 평가합니다.',
-    type: 'lifestyle',
-    smokingOptions: [
+    id: 'smoking',
+    stepTitle: '자기관리 · 흡연',
+    title: '흡연 여부를 선택해 주세요',
+    desc: '비흡연 선호도가 높은 매칭 시장 기준을 반영합니다.',
+    type: 'smoking',
+    options: [
       { label: '비흡연', penalty: 0, tag: null },
-      { label: '전자담배', penalty: 4, tag: '전자담배' },
-      { label: '연초 흡연', penalty: 8, tag: '흡연' }
-    ],
-    drinkingOptions: [
+      { label: '연초 흡연', penalty: 8, tag: '흡연' },
+      { label: '전자담배', penalty: 4, tag: '전자담배' }
+    ]
+  },
+  {
+    id: 'drinking',
+    stepTitle: '자기관리 · 음주',
+    title: '평소 음주 빈도는 어느 정도인가요?',
+    desc: '주간 음주 횟수와 생활 패턴을 확인합니다.',
+    type: 'single',
+    options: [
       { label: '안 마심 / 월 1~2회', penalty: 0, tag: null },
       { label: '주 1~2회', penalty: 1, tag: null },
       { label: '주 3~4회', penalty: 5, tag: '잦은 음주' },
       { label: '주 5회 이상', penalty: 9, tag: '과음' }
-    ],
-    religionOptions: [
-      { label: '무교', penalty: 0, tag: null },
-      { label: '종교 있음 (상대에게 강요 안 함)', penalty: 2, tag: null },
-      { label: '종교 있음 (같은 종교·신념 중요)', penalty: 8, tag: '종교 허들' }
-    ],
-    dietOptions: [
+    ]
+  },
+  {
+    id: 'diet',
+    stepTitle: '자기관리 · 식습관',
+    title: '평소 식단 성향은 어떤 편인가요?',
+    desc: '데이트 시 식사 궁합과 타협 난이도를 평가합니다.',
+    type: 'single',
+    options: [
       { label: '일반식 (가리는 것 없이 잘 먹음)', penalty: 0, tag: null },
       { label: '유연한 식단 (페스코 · 다이어트 식단 등)', penalty: 3, tag: null },
       { label: '엄격한 채식 (비건 · 락토 · 오보 등)', penalty: 9, tag: '엄격한 채식' },
       { label: '극단적 편식 · 특정 식재료 강한 거부', penalty: 6, tag: '까다로운 식성' }
+    ]
+  },
+  {
+    id: 'religion',
+    stepTitle: '가치관 · 종교',
+    title: '종교 유무와 가치관 기준을 알려주세요',
+    desc: '상대방과의 종교·신념 조율 난이도를 반영합니다.',
+    type: 'single',
+    options: [
+      { label: '무교', penalty: 0, tag: null },
+      { label: '종교 있음 (상대에게 강요 안 함)', penalty: 2, tag: null },
+      { label: '종교 있음 (같은 종교·신념 중요)', penalty: 8, tag: '종교 허들' }
     ]
   },
   {
@@ -224,37 +254,10 @@ const QUESTIONS = [
       { label: '6회 이상', score: 10 }
     ],
     longestOptions: [
-      { label: '해당 없음', score: 2 },
       { label: '6개월 미만', score: 5 },
       { label: '6개월 ~ 1년', score: 8 },
       { label: '1년 ~ 3년', score: 12 },
       { label: '3년 이상', score: 13 }
-    ]
-  },
-  {
-    id: 'spending',
-    stepTitle: '연애 성향',
-    title: '데이트 비용과 경제관에 대한 생각은?',
-    desc: '실제 소개팅 애프터 확률을 가르는 중요한 기준입니다.',
-    type: 'single',
-    options: [
-      { label: '상황과 여유에 따라 유연하게 번갈아 낸다', love: 16, appeal: 8 },
-      { label: '내가 조금 더 내는 편이 마음 편하다', love: 15, appeal: 7 },
-      { label: '1원 단위까지 칼같은 5:5 더치페이를 선호한다', love: 9, appeal: 2 },
-      { label: '상대방이 대부분 부담해 주길 바란다', love: 4, appeal: -3 }
-    ]
-  },
-  {
-    id: 'communication',
-    stepTitle: '연애 성향',
-    title: '연락 빈도와 갈등 해결 스타일은 어떤가요?',
-    desc: '장기 연애와 결혼 생활 유지력을 평가합니다.',
-    type: 'single',
-    options: [
-      { label: '감정이 상해도 대화로 차분히 바로 푸는 편', love: 18, appeal: 6 },
-      { label: '혼자 생각 정리할 시간이 조금 필요하다', love: 12, appeal: 4 },
-      { label: '연락 빈도와 답장 속도에 꽤 예민한 편이다', love: 8, appeal: 1 },
-      { label: '갈등이 생기면 일단 피하거나 잠수를 타는 편', love: 3, appeal: -3 }
     ]
   },
   {
