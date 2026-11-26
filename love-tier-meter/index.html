@@ -31,7 +31,9 @@
         <button type="button" id="btn-start" class="btn-primary">
           측정 시작하기
         </button>
-        <p class="privacy-note">※ 입력한 정보는 브라우저에서만 계산되며 어디에도 저장되지 않습니다.</p>
+        <div class="privacy-banner">
+          🔒 입력하신 모든 개인정보는 <strong>브라우저 내에서만 계산</strong>되며, 외부 서버에 저장되거나 전송되지 않습니다.
+        </div>
       </div>
     </main>
 
@@ -70,15 +72,17 @@
           <h2 class="result-title">결정사 모의 판정 리포트</h2>
         </div>
 
-        <div class="tier-result-hero tier-B" id="res-actual-box">
-          <span class="compare-label">결정사 모의 판정 등급</span>
-          <span id="res-actual-tier" class="hero-tier-letter">B</span>
-          <span id="res-tier-label" class="hero-tier-sub">무난한 호감형</span>
-        </div>
-
-        <div class="verdict-box">
-          <h3 id="res-headline" class="verdict-headline">“조건은 좋은데 매칭 풀을 스스로 좁히셨네요.”</h3>
-          <p id="res-comment" class="verdict-comment"></p>
+        <div class="result-top-row">
+          <div class="tier-badge-compact tier-B" id="res-actual-box">
+            <span class="compare-label">판정 등급</span>
+            <span id="res-actual-tier" class="compact-tier-letter">B+</span>
+            <span id="res-tier-label" class="compact-tier-sub">무난한 호감형</span>
+          </div>
+          <div class="verdict-compact">
+            <h3 id="res-headline" class="verdict-headline">“전체적으로 무난한데, 한 끗 포인트가 아쉽네요.”</h3>
+            <p id="res-comment" class="verdict-comment"></p>
+            <p id="res-advice" class="advice-text" style="margin-top:8px;"></p>
+          </div>
         </div>
 
         <div class="metrics-section">
@@ -88,9 +92,11 @@
           </div>
         </div>
 
-        <div class="advice-box">
-          <h4 class="section-subtitle">매니저 처방전</h4>
-          <p id="res-advice" class="advice-text"></p>
+        <div class="summary-sheet-section">
+          <h4 class="section-subtitle">입력 정보 종합 프로필</h4>
+          <div id="res-summary-sheet" class="summary-sheet">
+            <!-- JS로 지금까지 입력한 내 정보 정리 렌더링 -->
+          </div>
         </div>
       </article>
 

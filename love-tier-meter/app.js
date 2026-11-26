@@ -1,8 +1,15 @@
 // 연애등급측정기 앱 상태 및 판정 엔진
 
+function pickRandomNickname() {
+  return RANDOM_NICKNAMES[Math.floor(Math.random() * RANDOM_NICKNAMES.length)];
+}
+
 const state = {
   currentStep: 0,
   answers: {
+    userName: '',
+    isNamePrivate: false,
+    randomNickname: pickRandomNickname(),
     gender: null,
     birthYear: '',
     birthMonth: '',
@@ -21,6 +28,7 @@ const state = {
     housingType: null,
     housingCostManwon: '',
     cashManwon: '',
+    isaManwon: '',
     pensionManwon: '',
     investManwon: '',
     debtManwon: '',
@@ -62,6 +70,17 @@ function clearLifeTimer() {
     clearInterval(lifeTimerInterval);
     lifeTimerInterval = null;
   }
+}
+
+function getDisplayName() {
+  if (state.answers.isNamePrivate) return state.answers.randomNickname;
+  const trimmed = state.answers.userName.trim();
+  return trimmed || state.answers.randomNickname;
+}
+
+function getGreetingHtml(q) {
+  if (q.id === 'profile') return '';
+  return `<p class="q-greeting">“${getDisplayName()}”님의 ${q.stepTitle}에 대해 물어보려고 해요</p>`;
 }
 
 function showScreen(name, pushHistory = true) {
@@ -246,6 +265,7 @@ function renderQuestion() {
     const nextLabel = state.currentStep === total - 1 ? '결과 보기' : '다음 문항으로';
     quizBody.innerHTML = `
       <span class="q-step-badge">${q.stepTitle}</span>
+      ${getGreetingHtml(q)}
       <h2 class="q-title">${q.title}</h2>
       <p class="q-desc">${q.desc}</p>
       <div class="options-list">
@@ -285,21 +305,47 @@ function renderQuestion() {
 
 // 1. 기본 프로필
 function renderProfileStep(q) {
-  const { gender, birthYear, birthMonth, birthDay, birthHour, birthMinute, unknownTime, region } = state.answers;
+  const {
+    userName,
+    isNamePrivate,
+    randomNickname,
+    gender,
+    birthYear,
+    birthMonth,
+    birthDay,
+    birthHour,
+    birthMinute,
+    unknownTime,
+    region
+  } = state.answers;
+
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
       <div>
+        <span class="field-label">이름 (닉네임)</span>
+        <input id="input-name" class="select-input" type="text" maxlength="12"
+          placeholder="${isNamePrivate ? `랜덤 닉네임: ${randomNickname}` : '이름 또는 닉네임을 입력해 주세요'}"
+          value="${isNamePrivate ? '' : userName}" ${isNamePrivate ? 'disabled' : ''} />
+        <label class="checkbox-row">
+          <input type="checkbox" id="chk-private-name" ${isNamePrivate ? 'checked' : ''} />
+          <span>미공개 (랜덤 닉네임: <strong>${randomNickname}</strong>)</span>
+        </label>
+      </div>
+
+      <div>
         <span class="field-label">성별</span>
         <div class="gender-grid">
-          <button type="button" class="option-btn ${gender === 'male' ? 'selected' : ''}" data-gender="male">
-            <span>👨 남성</span>
+          <button type="button" class="option-btn gender-btn ${gender === 'male' ? 'selected' : ''}" data-gender="male">
+            <span class="gender-icon">👨</span>
+            <span class="gender-text">남성</span>
             <span class="option-check">${gender === 'male' ? '✓' : ''}</span>
           </button>
-          <button type="button" class="option-btn ${gender === 'female' ? 'selected' : ''}" data-gender="female">
-            <span>👩 여성</span>
+          <button type="button" class="option-btn gender-btn ${gender === 'female' ? 'selected' : ''}" data-gender="female">
+            <span class="gender-icon">👩</span>
+            <span class="gender-text">여성</span>
             <span class="option-check">${gender === 'female' ? '✓' : ''}</span>
           </button>
         </div>
@@ -335,7 +381,7 @@ function renderProfileStep(q) {
 
         <label class="checkbox-row">
           <input type="checkbox" id="chk-unknown-time" ${unknownTime ? 'checked' : ''} />
-          <span>시 · 분 모름</span>
+          <span>출생시간 모름</span>
         </label>
       </div>
 
@@ -346,7 +392,7 @@ function renderProfileStep(q) {
       </div>
 
       <div>
-        <span class="field-label">현재 거주 지역 (참고 정보)</span>
+        <span class="field-label">현재 거주 지역</span>
         <select id="select-region" class="select-input">
           ${REGIONS.map((r) => `<option value="${r}" ${region === r ? 'selected' : ''}>${r}</option>`).join('')}
         </select>
@@ -361,6 +407,8 @@ function renderProfileStep(q) {
     </div>
   `;
 
+  const nameEl = document.getElementById('input-name');
+  const chkPrivateEl = document.getElementById('chk-private-name');
   const yearEl = document.getElementById('input-year');
   const monthEl = document.getElementById('input-month');
   const dayEl = document.getElementById('input-day');
@@ -374,6 +422,19 @@ function renderProfileStep(q) {
   const timerLineEl = document.getElementById('life-timer-line');
   const milestoneLineEl = document.getElementById('life-milestone-line');
   const errorEl = document.getElementById('profile-error');
+
+  nameEl.addEventListener('input', () => {
+    state.answers.userName = nameEl.value;
+    errorEl.textContent = '';
+  });
+
+  chkPrivateEl.addEventListener('change', () => {
+    state.answers.isNamePrivate = chkPrivateEl.checked;
+    if (chkPrivateEl.checked) {
+      state.answers.randomNickname = pickRandomNickname();
+    }
+    renderProfileStep(q);
+  });
 
   function updateLifeCounter() {
     clearLifeTimer();
@@ -463,6 +524,10 @@ function renderProfileStep(q) {
   updateLifeCounter();
 
   document.getElementById('btn-profile-next').addEventListener('click', () => {
+    if (!state.answers.isNamePrivate && state.answers.userName.trim() === '') {
+      errorEl.textContent = '이름을 입력하거나 "미공개 (랜덤 닉네임)"을 선택해 주세요.';
+      return;
+    }
     if (!state.answers.gender) {
       errorEl.textContent = '성별을 선택해 주세요.';
       return;
@@ -516,6 +581,7 @@ function renderBodyStep(q) {
   const { heightCm, weightKg } = state.answers;
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
@@ -618,6 +684,7 @@ function renderEducationStep(q) {
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
@@ -694,7 +761,7 @@ function renderEducationStep(q) {
   bindBackButtons();
 }
 
-// 4. 직업 · 소득 (순 계약 연봉 + 인센티브 + 세전/세후 좌우 합계)
+// 4. 직업 · 소득 (순 계약 연봉 + 인센티브 + 세전/세후 연·월 합계)
 function formatManwonKorean(manwon) {
   const sign = manwon < 0 ? '-' : '';
   const abs = Math.abs(Math.round(manwon));
@@ -722,6 +789,7 @@ function renderJobStep(q) {
   const { employmentType, salaryManwon, incentiveManwon } = state.answers;
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
@@ -760,12 +828,16 @@ function renderJobStep(q) {
 
       <div id="salary-compare-box" class="salary-compare-box" style="display:none;">
         <div class="salary-compare-item">
-          <span class="salary-compare-label">세전 총합 (연봉+인센)</span>
+          <span class="salary-compare-label">세전 총합 (연)</span>
           <span id="gross-total-val" class="salary-compare-val">0원</span>
         </div>
         <div class="salary-compare-item">
-          <span class="salary-compare-label">예상 세후 실수령</span>
+          <span class="salary-compare-label">예상 세후 (연)</span>
           <span id="net-total-val" class="salary-compare-val">0원</span>
+        </div>
+        <div class="salary-compare-item">
+          <span class="salary-compare-label">예상 월 실수령</span>
+          <span id="monthly-net-val" class="salary-compare-val">0원</span>
         </div>
       </div>
 
@@ -783,6 +855,7 @@ function renderJobStep(q) {
   const compareBox = document.getElementById('salary-compare-box');
   const grossEl = document.getElementById('gross-total-val');
   const netEl = document.getElementById('net-total-val');
+  const monthlyEl = document.getElementById('monthly-net-val');
   const errorEl = document.getElementById('job-error');
 
   function updateSalaryPreview() {
@@ -799,10 +872,12 @@ function renderJobStep(q) {
     const inc = Math.max(0, Math.floor(Number(rawI) || 0));
     const totalGross = s + inc;
     const totalNet = estimateAfterTaxManwon(totalGross);
+    const monthlyNet = Math.round(totalNet / 12);
 
     compareBox.style.display = 'grid';
     grossEl.textContent = formatManwonKorean(totalGross);
     netEl.textContent = formatManwonKorean(totalNet);
+    monthlyEl.textContent = formatManwonKorean(monthlyNet);
     errorEl.textContent = '';
   }
 
@@ -850,6 +925,7 @@ function renderHousingStep(q) {
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
@@ -919,38 +995,46 @@ function renderHousingStep(q) {
   bindBackButtons();
 }
 
-// 6. 자산 - 저축
+// 6. 자산 - 저축 (한 줄씩 배치 + 청약/ISA 추가)
 function renderSavingsStep(q) {
-  const { cashManwon, pensionManwon, investManwon, debtManwon } = state.answers;
+  const { cashManwon, isaManwon, pensionManwon, investManwon, debtManwon } = state.answers;
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
-      <div class="savings-grid">
+      <div class="savings-list">
         <div>
-          <span class="field-label">현금 · 예적금</span>
+          <span class="field-label">현금 · 입출금 · 예적금</span>
           <div class="salary-input-wrap">
             <input id="input-cash" class="salary-input" type="number" inputmode="numeric" min="0" placeholder="0000" value="${cashManwon}" />
             <span class="salary-unit">만원</span>
           </div>
         </div>
         <div>
-          <span class="field-label">연금 · 퇴직연금</span>
+          <span class="field-label">청약 · ISA · 절세통장</span>
+          <div class="salary-input-wrap">
+            <input id="input-isa" class="salary-input" type="number" inputmode="numeric" min="0" placeholder="000" value="${isaManwon}" />
+            <span class="salary-unit">만원</span>
+          </div>
+        </div>
+        <div>
+          <span class="field-label">연금 · 퇴직연금 (IRP 등)</span>
           <div class="salary-input-wrap">
             <input id="input-pension" class="salary-input" type="number" inputmode="numeric" min="0" placeholder="0000" value="${pensionManwon}" />
             <span class="salary-unit">만원</span>
           </div>
         </div>
         <div>
-          <span class="field-label">주식 · 코인</span>
+          <span class="field-label">주식 · 펀드 · 코인</span>
           <div class="salary-input-wrap">
             <input id="input-invest" class="salary-input" type="number" inputmode="numeric" min="0" placeholder="000" value="${investManwon}" />
             <span class="salary-unit">만원</span>
           </div>
         </div>
         <div>
-          <span class="field-label">대출 (부동산 외)</span>
+          <span class="field-label">대출 (부동산 외 신용 · 학자금 등)</span>
           <div class="salary-input-wrap">
             <input id="input-debt" class="salary-input" type="number" inputmode="numeric" min="0" placeholder="0" value="${debtManwon}" />
             <span class="salary-unit">만원</span>
@@ -969,6 +1053,7 @@ function renderSavingsStep(q) {
   `;
 
   const cashEl = document.getElementById('input-cash');
+  const isaEl = document.getElementById('input-isa');
   const pensionEl = document.getElementById('input-pension');
   const investEl = document.getElementById('input-invest');
   const debtEl = document.getElementById('input-debt');
@@ -976,19 +1061,21 @@ function renderSavingsStep(q) {
 
   function updateSavingsPreview() {
     state.answers.cashManwon = cashEl.value.trim();
+    state.answers.isaManwon = isaEl.value.trim();
     state.answers.pensionManwon = pensionEl.value.trim();
     state.answers.investManwon = investEl.value.trim();
     state.answers.debtManwon = debtEl.value.trim();
 
     const net =
       (Number(state.answers.cashManwon) || 0) +
+      (Number(state.answers.isaManwon) || 0) +
       (Number(state.answers.pensionManwon) || 0) +
       (Number(state.answers.investManwon) || 0) -
       (Number(state.answers.debtManwon) || 0);
     previewEl.textContent = `순 금융자산: ${formatManwonKorean(net)}`;
   }
 
-  [cashEl, pensionEl, investEl, debtEl].forEach((el) => el.addEventListener('input', updateSavingsPreview));
+  [cashEl, isaEl, pensionEl, investEl, debtEl].forEach((el) => el.addEventListener('input', updateSavingsPreview));
   updateSavingsPreview();
 
   document.getElementById('btn-savings-next').addEventListener('click', () => {
@@ -1004,6 +1091,7 @@ function renderSelfcareStep(q) {
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
@@ -1084,13 +1172,14 @@ function renderSelfcareStep(q) {
   bindBackButtons();
 }
 
-// 9. 자기관리 - 생활습관 (흡연, 음주, 종교, 식단 성향)
+// 9. 자기관리 - 생활습관
 function renderLifestyleStep(q) {
   const { smoking, drinking, religion, diet } = state.answers;
   const canProceed = smoking !== null && drinking !== null && religion !== null && diet !== null;
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
@@ -1199,6 +1288,7 @@ function renderDatingStep(q) {
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
     <h2 class="q-title">${q.title}</h2>
     <p class="q-desc">${q.desc}</p>
     <div class="profile-form">
@@ -1274,7 +1364,7 @@ function runAnalysis() {
   showScreen('loading');
   const statusEl = document.getElementById('loading-status');
   const messages = [
-    '자산·소득과 피지컬 지표를 분석하고 있습니다...',
+    `${getDisplayName()}님의 자산·소득과 피지컬 지표를 분석하고 있습니다...`,
     '자기관리와 생활 허들, 연애 성향을 대조 중입니다...',
     '수석 매니저의 최종 판정이 완료되었습니다.'
   ];
@@ -1294,13 +1384,21 @@ function runAnalysis() {
   }, 1500);
 }
 
-// 등급 산정 엔진
+// 등급 산정 엔진 (+, 기본, - 세분화)
 function getQuestionById(id) {
   return QUESTIONS.find((q) => q.id === id);
 }
 
+function resolveSubTier(score) {
+  for (const item of SUB_TIER_THRESHOLDS) {
+    if (score >= item.minScore) return item;
+  }
+  return SUB_TIER_THRESHOLDS[SUB_TIER_THRESHOLDS.length - 1];
+}
+
 function evaluateResult() {
   const a = state.answers;
+  const displayName = getDisplayName();
   const { manAge, yearAge } = calculateAges(Number(a.birthYear), Number(a.birthMonth), Number(a.birthDay));
   const zodiac = getZodiacInfo(Number(a.birthYear));
 
@@ -1329,12 +1427,14 @@ function evaluateResult() {
   // 2) 학력
   const eduQ = getQuestionById('education');
   const degOpt = eduQ.degreeOptions[a.educationDegree];
-  const tierOpt = degOpt.needsTier && a.educationTier !== null ? eduQ.tierOptions[a.educationTier] : { spec: 0 };
-  const eduSpec = degOpt.spec + tierOpt.spec;
+  const tierOpt = degOpt.needsTier && a.educationTier !== null ? eduQ.tierOptions[a.educationTier] : null;
+  const eduSpec = degOpt.spec + (tierOpt ? tierOpt.spec : 0);
 
   // 3) 직업 · 총소득
   const empOpt = getQuestionById('job').employmentOptions[a.employmentType];
   const grossSalary = (Number(a.salaryManwon) || 0) + (Number(a.incentiveManwon) || 0);
+  const netSalary = estimateAfterTaxManwon(grossSalary);
+  const monthlyNet = Math.round(netSalary / 12);
   let salarySpec = 2;
   if (grossSalary >= 12000) salarySpec = 20;
   else if (grossSalary >= 8500) salarySpec = 16;
@@ -1342,16 +1442,18 @@ function evaluateResult() {
   else if (grossSalary >= 4000) salarySpec = 9;
   else if (grossSalary >= 2500) salarySpec = 5;
 
-  // 4) 자산 (부동산 + 월 주거비 보정 + 순금융자산 + 차량)
+  // 4) 자산
   const houseOpt = getQuestionById('housing').options[a.housingType];
   const houseCost = Number(a.housingCostManwon) || 0;
   const costPenalty = houseCost >= 150 ? 4 : houseCost >= 80 ? 2 : 0;
 
   const netFinancial =
     (Number(a.cashManwon) || 0) +
+    (Number(a.isaManwon) || 0) +
     (Number(a.pensionManwon) || 0) +
     (Number(a.investManwon) || 0) -
     (Number(a.debtManwon) || 0);
+
   let savingsSpec = 2;
   if (netFinancial >= 30000) savingsSpec = 18;
   else if (netFinancial >= 15000) savingsSpec = 14;
@@ -1359,7 +1461,9 @@ function evaluateResult() {
   else if (netFinancial >= 2000) savingsSpec = 6;
   else if (netFinancial < 0) savingsSpec = 0;
 
-  const carOpt = getQuestionById('car').options[a.car];
+  const carQ = getQuestionById('car');
+  const carOpt = carQ.options[a.car];
+  const hasCar = a.car === 0 || a.car === 1;
 
   // 5) 연령 가중치
   let ageScore = 10;
@@ -1374,17 +1478,17 @@ function evaluateResult() {
     else ageScore = 5;
   }
 
-  // 지표 1: 자산 · 스펙 (100점 환산, max ~119)
+  // 지표 1: 자산 · 스펙
   const rawAssetSpec =
     heightSpec + bmiSpec + eduSpec + empOpt.spec + salarySpec + (houseOpt.spec - costPenalty) + savingsSpec + carOpt.spec + ageScore;
   const assetSpecPercent = Math.max(10, Math.min(100, Math.round((rawAssetSpec / 119) * 100)));
 
-  // 지표 2: 자기관리 · 생활 (운동 + 생활습관 허들)
+  // 지표 2: 자기관리 · 생활
   const selfQ = getQuestionById('selfcare');
-  const exScore =
-    selfQ.freqOptions[a.exerciseFreq].score +
-    selfQ.durationOptions[a.exerciseDuration].score +
-    selfQ.yearsOptions[a.exerciseYears].score; // max 35
+  const freqOpt = selfQ.freqOptions[a.exerciseFreq];
+  const durOpt = selfQ.durationOptions[a.exerciseDuration];
+  const yrsOpt = selfQ.yearsOptions[a.exerciseYears];
+  const exScore = freqOpt.score + durOpt.score + yrsOpt.score;
 
   const lifeQ = getQuestionById('lifestyle');
   const smkOpt = lifeQ.smokingOptions[a.smoking];
@@ -1396,15 +1500,17 @@ function evaluateResult() {
 
   const selfcarePercent = Math.max(10, Math.min(100, Math.round(((exScore + 25 - hurdlePenalty * 1.4) / 60) * 100)));
 
-  // 지표 3: 연애 내공 · 성향 (연애 횟수/최장기간 + 소비관 + 소통)
+  // 지표 3: 연애 내공 · 성향
   const datQ = getQuestionById('dating');
-  const datingExpScore = datQ.countOptions[a.datingCount].score + datQ.longestOptions[a.datingLongest].score; // max 25
+  const dcOpt = datQ.countOptions[a.datingCount];
+  const dlOpt = datQ.longestOptions[a.datingLongest];
+  const datingExpScore = dcOpt.score + dlOpt.score;
   const spendOpt = getQuestionById('spending').options[a.spending];
   const commOpt = getQuestionById('communication').options[a.communication];
-  const rawLove = datingExpScore + spendOpt.love + commOpt.love; // max 59
+  const rawLove = datingExpScore + spendOpt.love + commOpt.love;
   const lovePercent = Math.max(10, Math.min(100, Math.round((rawLove / 59) * 100)));
 
-  // 지표 4: 메타인지 (눈높이 균형)
+  // 지표 4: 메타인지
   const stdOpt = getQuestionById('standard').options[a.standard];
   let eyePenalty = 0;
   if (assetSpecPercent < 55 && stdOpt.demandLevel >= 3) eyePenalty = 14;
@@ -1422,24 +1528,38 @@ function evaluateResult() {
     )
   );
 
-  let actualTier = 'D';
-  for (const t of TIER_ORDER) {
-    if (totalScore >= TIER_PROFILES[t].minScore) {
-      actualTier = t;
-      break;
-    }
-  }
+  const tierObj = resolveSubTier(totalScore);
+
+  const summaryItems = [
+    { key: '이름', val: `${displayName}${a.isNamePrivate ? ' (비공개)' : ''}` },
+    { key: '거주지', val: a.region },
+    { key: '신체 · BMI', val: `${h}cm · ${w}kg (${bmi.toFixed(1)} · ${getBmiCategory(bmi)})` },
+    { key: '최종 학력', val: tierOpt ? `${degOpt.label} (${tierOpt.label.split(' ')[0]})` : degOpt.label },
+    { key: '고용 형태', val: empOpt.label },
+    { key: '소득 (세전 / 월 실수령)', val: `${formatManwonKorean(grossSalary)} / 월 ${formatManwonKorean(monthlyNet)}` },
+    { key: '부동산 · 주거비', val: `${houseOpt.label} (월 ${houseCost}만원)` },
+    { key: '순 금융자산', val: formatManwonKorean(netFinancial) },
+    { key: '자차 소유', val: hasCar ? `[✓] ${carOpt.label}` : `[ ] 없음` },
+    { key: '운동 습관', val: `${freqOpt.label} · ${durOpt.label} (${yrsOpt.label})` },
+    { key: '흡연 · 음주', val: `${smkOpt.label} · ${drkOpt.label}` },
+    { key: '종교 · 식단', val: `${relOpt.label.split(' ')[0]} · ${dietOpt.label.split(' ')[0]}` },
+    { key: '연애 이력', val: `${dcOpt.label} (최장 ${dlOpt.label})` },
+    { key: '소비 · 소통', val: `${spendOpt.label.slice(0, 12)}…` }
+  ];
 
   return {
+    displayName,
     genderLabel: a.gender === 'male' ? '👨 남성' : '👩 여성',
     manAge,
     yearAge,
     zodiac,
     region: a.region,
-    actualTier,
+    actualTier: tierObj.tier,
+    baseTier: tierObj.base,
     totalScore,
     hurdleTags,
     eyePenalty,
+    summaryItems,
     metrics: [
       { label: '자산 · 스펙 (부동산·저축·소득·피지컬)', score: assetSpecPercent },
       { label: '자기관리 · 생활 (운동·생활습관)', score: selfcarePercent },
@@ -1453,13 +1573,13 @@ let lastResult = null;
 
 function renderResult(res) {
   lastResult = res;
-  const profile = TIER_PROFILES[res.actualTier];
+  const profile = TIER_PROFILES[res.baseTier];
 
-  document.getElementById('result-profile-badge').textContent = `${res.zodiac.emoji} 만 ${res.manAge}세(연 ${res.yearAge}) · ${res.genderLabel} · ${res.region}`;
+  document.getElementById('result-profile-badge').textContent = `${res.zodiac.emoji} ${res.displayName} · 만 ${res.manAge}세(연 ${res.yearAge}) · ${res.genderLabel} · ${res.region}`;
   document.getElementById('result-doc-id').textContent = `SCORE ${res.totalScore} / 100`;
 
   const actualBox = document.getElementById('res-actual-box');
-  actualBox.className = `tier-result-hero tier-${res.actualTier}`;
+  actualBox.className = `tier-badge-compact tier-${res.baseTier}`;
   document.getElementById('res-actual-tier').textContent = res.actualTier;
   document.getElementById('res-tier-label').textContent = profile.label;
 
@@ -1473,7 +1593,7 @@ function renderResult(res) {
     extraComment += ' 본인 조건 대비 희망 기준이 높게 설정되어 감점이 발생했습니다.';
   }
   document.getElementById('res-comment').textContent = extraComment;
-  document.getElementById('res-advice').textContent = profile.advice;
+  document.getElementById('res-advice').textContent = `💡 매니저 처방: ${profile.advice}`;
 
   const metricsEl = document.getElementById('res-metrics');
   metricsEl.innerHTML = res.metrics
@@ -1487,6 +1607,18 @@ function renderResult(res) {
         <div class="metric-bar-bg">
           <div class="metric-bar-fill" style="width: ${m.score}%"></div>
         </div>
+      </div>
+    `
+    )
+    .join('');
+
+  const summarySheetEl = document.getElementById('res-summary-sheet');
+  summarySheetEl.innerHTML = res.summaryItems
+    .map(
+      (item) => `
+      <div class="summary-item">
+        <span class="summary-key">${item.key}</span>
+        <span class="summary-val">${item.val}</span>
       </div>
     `
     )
@@ -1515,13 +1647,13 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
   ctx.fillStyle = '#5f6673';
   ctx.font = '600 17px sans-serif';
   ctx.fillText(
-    `${lastResult.zodiac.emoji} 만 ${lastResult.manAge}세 · ${lastResult.genderLabel} · ${lastResult.region} (총점 ${lastResult.totalScore}점)`,
+    `${lastResult.zodiac.emoji} ${lastResult.displayName} · 만 ${lastResult.manAge}세 · ${lastResult.genderLabel} · ${lastResult.region} (${lastResult.totalScore}점)`,
     80,
     140
   );
 
   const tierColors = { S: '#7c3aed', A: '#2563eb', B: '#059669', C: '#d97706', D: '#dc2626' };
-  ctx.fillStyle = tierColors[lastResult.actualTier];
+  ctx.fillStyle = tierColors[lastResult.baseTier];
   roundRect(ctx, 80, 175, 560, 165, 22);
   ctx.fill();
   ctx.fillStyle = '#ffffff';
@@ -1531,12 +1663,12 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
   ctx.font = 'bold 72px sans-serif';
   ctx.fillText(lastResult.actualTier, 360, 288);
   ctx.font = 'bold 18px sans-serif';
-  ctx.fillText(TIER_PROFILES[lastResult.actualTier].label, 360, 322);
+  ctx.fillText(TIER_PROFILES[lastResult.baseTier].label, 360, 322);
 
   ctx.textAlign = 'left';
   ctx.fillStyle = '#181c23';
   ctx.font = 'bold 22px sans-serif';
-  const headline = TIER_PROFILES[lastResult.actualTier].headline;
+  const headline = TIER_PROFILES[lastResult.baseTier].headline;
   wrapText(ctx, headline, 80, 390, 560, 32);
 
   let y = 490;
@@ -1599,7 +1731,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 // 결과 텍스트 + URL 복사
 document.getElementById('btn-copy-link').addEventListener('click', async () => {
   if (!lastResult) return;
-  const text = `[연애등급측정기]\n판정 결과: ${lastResult.actualTier}등급 · ${TIER_PROFILES[lastResult.actualTier].label} (${lastResult.totalScore}점)\n${TIER_PROFILES[lastResult.actualTier].headline}\n${window.location.href}`;
+  const text = `[연애등급측정기 - ${lastResult.displayName}]\n판정 결과: ${lastResult.actualTier}등급 · ${TIER_PROFILES[lastResult.baseTier].label} (${lastResult.totalScore}점)\n${TIER_PROFILES[lastResult.baseTier].headline}\n${window.location.href}`;
   try {
     await navigator.clipboard.writeText(text);
     showToast('결과가 클립보드에 복사되었습니다!');
@@ -1620,6 +1752,9 @@ document.getElementById('btn-retry').addEventListener('click', () => {
   clearLifeTimer();
   state.currentStep = 0;
   state.answers = {
+    userName: '',
+    isNamePrivate: false,
+    randomNickname: pickRandomNickname(),
     gender: null,
     birthYear: '',
     birthMonth: '',
@@ -1638,6 +1773,7 @@ document.getElementById('btn-retry').addEventListener('click', () => {
     housingType: null,
     housingCostManwon: '',
     cashManwon: '',
+    isaManwon: '',
     pensionManwon: '',
     investManwon: '',
     debtManwon: '',

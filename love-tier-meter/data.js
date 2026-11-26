@@ -2,6 +2,30 @@
 
 const TIER_ORDER = ['S', 'A', 'B', 'C', 'D'];
 
+const SUB_TIER_THRESHOLDS = [
+  { tier: 'S+', base: 'S', minScore: 95 },
+  { tier: 'S', base: 'S', minScore: 92 },
+  { tier: 'S-', base: 'S', minScore: 89 },
+  { tier: 'A+', base: 'A', minScore: 84 },
+  { tier: 'A', base: 'A', minScore: 80 },
+  { tier: 'A-', base: 'A', minScore: 76 },
+  { tier: 'B+', base: 'B', minScore: 70 },
+  { tier: 'B', base: 'B', minScore: 65 },
+  { tier: 'B-', base: 'B', minScore: 60 },
+  { tier: 'C+', base: 'C', minScore: 54 },
+  { tier: 'C', base: 'C', minScore: 49 },
+  { tier: 'C-', base: 'C', minScore: 44 },
+  { tier: 'D+', base: 'D', minScore: 36 },
+  { tier: 'D', base: 'D', minScore: 26 },
+  { tier: 'D-', base: 'D', minScore: 0 }
+];
+
+const RANDOM_NICKNAMES = [
+  '수줍은 판다', '새벽의 고양이', '진지한 알파카', '용감한 수달',
+  '따뜻한 라떼', '낭만적인 여우', '산책하는 시바', '조용한 부엉이',
+  '반짝이는 고래', '부지런한 다람쥐'
+];
+
 const TIER_PROFILES = {
   S: {
     minScore: 90,
@@ -49,6 +73,7 @@ const QUESTIONS = [
   {
     id: 'profile',
     stepTitle: '기본 프로필',
+    askTopic: '기본 프로필',
     title: '성별과 출생 정보, 거주지를 알려주세요',
     desc: '만 나이·연 나이와 12지신, 실시간 인생 카운터를 계산합니다.',
     type: 'profile'
@@ -56,6 +81,7 @@ const QUESTIONS = [
   {
     id: 'body',
     stepTitle: '신체 조건',
+    askTopic: '신체 조건',
     title: '키와 몸무게를 알려주세요',
     desc: '입력을 마치면 아래 BMI 게이지 화살표가 내 위치로 이동합니다.',
     type: 'body'
@@ -63,6 +89,7 @@ const QUESTIONS = [
   {
     id: 'education',
     stepTitle: '학력',
+    askTopic: '학력',
     title: '최종 학력을 알려주세요',
     desc: '대졸 이상인 경우 수도권·지방 대학 구간을 함께 선택합니다.',
     type: 'education',
