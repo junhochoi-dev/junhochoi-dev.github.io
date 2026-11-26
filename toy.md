@@ -9,6 +9,7 @@ permalink: /toy/
 <p class="page-banner-desc">가볍게 만들어 본 실험 프로젝트와 사이드 작업들</p>
 </div>
 
+{% if site.data.toy and site.data.toy.size > 0 %}
 <div class="two-col-grid">
 {% for item in site.data.toy %}
 <a href="{{ item.url }}" target="_blank" rel="noopener" class="info-card">
@@ -21,3 +22,8 @@ permalink: /toy/
 </a>
 {% endfor %}
 </div>
+{% else %}
+<div class="info-card" style="text-align: center; padding: 3rem 1.5rem;">
+<p class="info-card-desc">아직 등록된 토이 프로젝트가 없습니다.</p>
+</div>
+{% endif %}
