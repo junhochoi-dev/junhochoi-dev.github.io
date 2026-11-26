@@ -75,6 +75,53 @@ a:hover {
   line-height: 1.6;
 }
 
+/* Log Main Tabs */
+.log-main-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 0.75rem;
+}
+
+.log-main-tab {
+  padding: 0.55rem 1.2rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #525252;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.log-main-tab:hover {
+  border-color: #0a0a0a;
+  color: #0a0a0a;
+}
+
+.log-main-tab.active {
+  background: #0a0a0a;
+  border-color: #0a0a0a;
+  color: #ffffff;
+}
+
+.log-tab-panel[hidden] {
+  display: none !important;
+}
+
+.log-tab-quote {
+  margin: 0 0 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #0a0a0a;
+  background: #fafafa;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.94rem;
+  color: #404040;
+  line-height: 1.6;
+}
+
 /* Hero Section (Monochrome) */
 .hero-section {
   padding: 3.5rem 2.75rem;

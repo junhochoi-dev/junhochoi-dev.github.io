@@ -7,9 +7,17 @@ permalink: /log/
 {% assign r = site.data.running %}
 
 <div class="page-banner">
-<h1 class="page-banner-title">Marathon &amp; Running Log</h1>
-<p class="page-banner-desc">{{ r.quote }}</p>
+<h1 class="page-banner-title">Log</h1>
+<p class="page-banner-desc">러닝 기록과 일상·개발 로그를 카테고리별로 모아봅니다.</p>
 </div>
+
+<div class="log-main-tabs" id="log-main-tabs">
+<button type="button" class="log-main-tab active" data-tab="running">Running</button>
+<button type="button" class="log-main-tab" data-tab="daily">Daily</button>
+</div>
+
+<section id="tab-running" class="log-tab-panel">
+<p class="log-tab-quote">{{ r.quote }}</p>
 
 <div class="stat-grid">
 <div class="stat-card stat-card-dark">
@@ -69,9 +77,49 @@ permalink: /log/
 {% endfor %}
 </ul>
 </div>
+</section>
+
+<section id="tab-daily" class="log-tab-panel" hidden>
+<div class="timeline">
+{% for log in site.data.dailylog %}
+<div class="timeline-item">
+<div class="timeline-header">
+<h2 class="timeline-role">{{ log.title }}</h2>
+<span class="timeline-date">{{ log.date }}</span>
+</div>
+<ul class="timeline-list">
+{% for item in log.items %}
+<li>{{ item }}</li>
+{% endfor %}
+</ul>
+{% if log.tags %}
+<ul class="badge-list">
+{% for tag in log.tags %}
+<li class="skill-pill">#{{ tag }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</section>
 
 <script>
 (function () {
+  const mainTabs = document.querySelectorAll('#log-main-tabs .log-main-tab');
+  const panels = document.querySelectorAll('.log-tab-panel');
+
+  mainTabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      const target = tab.getAttribute('data-tab');
+      mainTabs.forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      panels.forEach(function (panel) {
+        panel.hidden = (panel.id !== 'tab-' + target);
+      });
+    });
+  });
+
   const buttons = document.querySelectorAll('#race-filters .log-filter-btn');
   const rows = document.querySelectorAll('#race-list li');
 
