@@ -21,7 +21,8 @@ function createDefaultAnswers() {
     unknownTime: false,
     bloodType: null,
     mbti: { ei: null, sn: null, tf: null, jp: null },
-    region: '서울',
+    regionSido: '서울특별시',
+    regionGungu: '강남구',
     heightCm: '',
     weightKg: '',
     educationDegree: null,
@@ -88,12 +89,26 @@ const toastEl = document.getElementById('toast');
 
 let isHandlingPopState = false;
 let lifeTimerInterval = null;
+let regionMapInstance = null;
 
 function clearLifeTimer() {
   if (lifeTimerInterval) {
     clearInterval(lifeTimerInterval);
     lifeTimerInterval = null;
   }
+}
+
+function clearRegionMap() {
+  if (regionMapInstance) {
+    regionMapInstance.remove();
+    regionMapInstance = null;
+  }
+}
+
+function getRegionDisplay(a = state.answers) {
+  const sido = a.regionSido || '서울특별시';
+  const gungu = a.regionGungu || '';
+  return gungu ? `${sido} ${gungu}` : sido;
 }
 
 function getDisplayName() {
@@ -108,7 +123,10 @@ function getGreetingHtml(q) {
 }
 
 function showScreen(name, pushHistory = true) {
-  if (name !== 'quiz') clearLifeTimer();
+  if (name !== 'quiz') {
+    clearLifeTimer();
+    clearRegionMap();
+  }
   state.currentScreen = name;
   Object.values(screens).forEach((el) => el.classList.remove('active'));
   screens[name].classList.add('active');
@@ -270,6 +288,7 @@ function validateBirthdate(yStr, mStr, dStr) {
 // 문항 렌더링
 function renderQuestion() {
   clearLifeTimer();
+  clearRegionMap();
   const q = QUESTIONS[state.currentStep];
   const total = QUESTIONS.length;
   const percent = Math.round(((state.currentStep + 1) / total) * 100);
@@ -278,6 +297,8 @@ function renderQuestion() {
   saveAppState();
 
   if (q.type === 'profile') return renderProfileStep(q);
+  if (q.type === 'personality') return renderPersonalityStep(q);
+  if (q.type === 'region') return renderRegionStep(q);
   if (q.type === 'body') return renderBodyStep(q);
   if (q.type === 'education') return renderEducationStep(q);
   if (q.type === 'job') return renderJobStep(q);
@@ -356,15 +377,11 @@ function renderProfileStep(q) {
     birthAmPm,
     birthHour,
     birthMinute,
-    unknownTime,
-    bloodType,
-    mbti,
-    region
+    unknownTime
   } = state.answers;
 
   const currentYear = new Date().getFullYear();
   const maxYear = currentYear - 18;
-  const mbtiStr = getMbtiString(mbti);
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
@@ -442,46 +459,6 @@ function renderProfileStep(q) {
         <div id="life-milestone-line" class="life-milestone-line"></div>
       </div>
 
-      <div>
-        <span class="field-label">혈액형</span>
-        <div class="blood-grid">
-          ${BLOOD_TYPES.map(
-            (bt) => `
-            <button type="button" class="option-btn ${bloodType === bt ? 'selected' : ''}" data-blood="${bt}">
-              <span>${bt}</span>
-              <span class="option-check">${bloodType === bt ? '✓' : ''}</span>
-            </button>`
-          ).join('')}
-        </div>
-      </div>
-
-      <div>
-        <span class="field-label">MBTI ${mbtiStr ? `(${mbtiStr})` : ''}</span>
-        <div class="mbti-axes">
-          ${MBTI_AXES.map(
-            (axis) => `
-            <div class="mbti-row">
-              ${axis.options
-                .map(
-                  (opt) => `
-                <button type="button" class="option-btn mbti-btn ${mbti[axis.key] === opt.code ? 'selected' : ''}" data-mbti-axis="${axis.key}" data-mbti-code="${opt.code}">
-                  <span>${opt.label}</span>
-                  <span class="option-check">${mbti[axis.key] === opt.code ? '✓' : ''}</span>
-                </button>`
-                )
-                .join('')}
-            </div>`
-          ).join('')}
-        </div>
-      </div>
-
-      <div>
-        <span class="field-label">현재 거주 지역</span>
-        <select id="select-region" class="select-input">
-          ${REGIONS.map((r) => `<option value="${r}" ${region === r ? 'selected' : ''}>${r}</option>`).join('')}
-        </select>
-      </div>
-
       <div id="profile-error" class="error-msg"></div>
 
       <div class="quiz-nav-row">
@@ -500,7 +477,6 @@ function renderProfileStep(q) {
   const minEl = document.getElementById('input-minute');
   const chkUnknownEl = document.getElementById('chk-unknown-time');
   const timeWrapEl = document.getElementById('time-inputs-wrap');
-  const regionEl = document.getElementById('select-region');
   const counterBox = document.getElementById('life-counter-box');
   const ageLineEl = document.getElementById('life-age-line');
   const timerLineEl = document.getElementById('life-timer-line');
@@ -651,38 +627,10 @@ function renderProfileStep(q) {
     });
   });
 
-  quizBody.querySelectorAll('[data-blood]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.answers.bloodType = btn.dataset.blood;
-      quizBody.querySelectorAll('[data-blood]').forEach((b) => {
-        const active = b.dataset.blood === state.answers.bloodType;
-        b.classList.toggle('selected', active);
-        b.querySelector('.option-check').textContent = active ? '✓' : '';
-      });
-      errorEl.textContent = '';
-      saveAppState();
-    });
-  });
-
-  quizBody.querySelectorAll('[data-mbti-axis]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const axis = btn.dataset.mbtiAxis;
-      const code = btn.dataset.mbtiCode;
-      state.answers.mbti[axis] = code;
-      saveAppState();
-      renderProfileStep(q);
-    });
-  });
-
   chkUnknownEl.addEventListener('change', () => {
     state.answers.unknownTime = chkUnknownEl.checked;
     timeWrapEl.style.display = state.answers.unknownTime ? 'none' : 'grid';
     updateLifeCounter();
-  });
-
-  regionEl.addEventListener('change', () => {
-    state.answers.region = regionEl.value;
-    saveAppState();
   });
 
   yearEl.addEventListener('input', () => {
@@ -741,6 +689,83 @@ function renderProfileStep(q) {
         return;
       }
     }
+    goNextStep();
+  });
+  bindBackButtons();
+}
+
+// 1-2. 혈액형 · MBTI
+function renderPersonalityStep(q) {
+  const { bloodType, mbti } = state.answers;
+  const mbtiStr = getMbtiString(mbti);
+  const canProceed = Boolean(bloodType && mbtiStr);
+
+  quizBody.innerHTML = `
+    <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
+    <h2 class="q-title">${q.title}</h2>
+    <p class="q-desc">${q.desc}</p>
+    <div class="profile-form">
+      <div>
+        <span class="field-label">혈액형</span>
+        <div class="blood-grid">
+          ${BLOOD_TYPES.map(
+            (bt) => `
+            <button type="button" class="option-btn ${bloodType === bt ? 'selected' : ''}" data-blood="${bt}">
+              <span>${bt}</span>
+              <span class="option-check">${bloodType === bt ? '✓' : ''}</span>
+            </button>`
+          ).join('')}
+        </div>
+      </div>
+
+      <div>
+        <span class="field-label">MBTI ${mbtiStr ? `(${mbtiStr})` : ''}</span>
+        <div class="mbti-axes">
+          ${MBTI_AXES.map(
+            (axis) => `
+            <div class="mbti-row">
+              ${axis.options
+                .map(
+                  (opt) => `
+                <button type="button" class="option-btn mbti-btn ${mbti[axis.key] === opt.code ? 'selected' : ''}" data-mbti-axis="${axis.key}" data-mbti-code="${opt.code}">
+                  <span>${opt.label}</span>
+                  <span class="option-check">${mbti[axis.key] === opt.code ? '✓' : ''}</span>
+                </button>`
+                )
+                .join('')}
+            </div>`
+          ).join('')}
+        </div>
+      </div>
+
+      <div id="personality-error" class="error-msg"></div>
+
+      <div class="quiz-nav-row">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
+        <button type="button" id="btn-personality-next" class="btn-primary" ${canProceed ? '' : 'disabled'}>다음 문항으로</button>
+      </div>
+    </div>
+  `;
+
+  quizBody.querySelectorAll('[data-blood]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.answers.bloodType = btn.dataset.blood;
+      saveAppState();
+      renderPersonalityStep(q);
+    });
+  });
+
+  quizBody.querySelectorAll('[data-mbti-axis]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.answers.mbti[btn.dataset.mbtiAxis] = btn.dataset.mbtiCode;
+      saveAppState();
+      renderPersonalityStep(q);
+    });
+  });
+
+  document.getElementById('btn-personality-next').addEventListener('click', () => {
+    const errorEl = document.getElementById('personality-error');
     if (!state.answers.bloodType) {
       errorEl.textContent = '혈액형을 선택해 주세요.';
       return;
@@ -749,6 +774,114 @@ function renderProfileStep(q) {
       errorEl.textContent = 'MBTI 4가지 성향을 모두 선택해 주세요.';
       return;
     }
+    goNextStep();
+  });
+  bindBackButtons();
+}
+
+// 1-3. 현재 거주 지역 (시/도, 시/군/구 + 지도)
+function renderRegionStep(q) {
+  const sidoList = Object.keys(KOREA_REGIONS);
+  if (!KOREA_REGIONS[state.answers.regionSido]) {
+    state.answers.regionSido = sidoList[0];
+  }
+  const sidoObj = KOREA_REGIONS[state.answers.regionSido];
+  const gunguList = Object.keys(sidoObj.districts);
+  if (!sidoObj.districts[state.answers.regionGungu]) {
+    state.answers.regionGungu = gunguList[0];
+  }
+
+  const { regionSido, regionGungu } = state.answers;
+  const coords = sidoObj.districts[regionGungu] || sidoObj.center;
+
+  quizBody.innerHTML = `
+    <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
+    <h2 class="q-title">${q.title}</h2>
+    <p class="q-desc">${q.desc}</p>
+    <div class="profile-form">
+      <div class="region-select-grid">
+        <div>
+          <span class="field-label">시 · 도</span>
+          <select id="select-sido" class="select-input">
+            ${sidoList.map((s) => `<option value="${s}" ${regionSido === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <span class="field-label">시 · 군 · 구</span>
+          <select id="select-gungu" class="select-input">
+            ${gunguList.map((g) => `<option value="${g}" ${regionGungu === g ? 'selected' : ''}>${g}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="region-map-wrap">
+        <div class="region-map-bar">
+          <span id="region-map-label">📍 ${regionSido} ${regionGungu}</span>
+          <span id="region-map-coords" class="region-map-coords">${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}</span>
+        </div>
+        <div id="region-map" class="region-map-canvas"></div>
+      </div>
+
+      <div class="quiz-nav-row">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
+        <button type="button" id="btn-region-next" class="btn-primary">다음 문항으로</button>
+      </div>
+    </div>
+  `;
+
+  const sidoEl = document.getElementById('select-sido');
+  const gunguEl = document.getElementById('select-gungu');
+  const labelEl = document.getElementById('region-map-label');
+  const coordsEl = document.getElementById('region-map-coords');
+
+  let marker = null;
+  if (typeof L !== 'undefined') {
+    const initialZoom = regionSido === '해외' ? 4 : 12;
+    regionMapInstance = L.map('region-map').setView(coords, initialZoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 18
+    }).addTo(regionMapInstance);
+    marker = L.marker(coords).addTo(regionMapInstance);
+    marker.bindPopup(`<b>${regionSido} ${regionGungu}</b>`).openPopup();
+    setTimeout(() => {
+      if (regionMapInstance) regionMapInstance.invalidateSize();
+    }, 80);
+  }
+
+  function syncMapAndLabel() {
+    const s = state.answers.regionSido;
+    const g = state.answers.regionGungu;
+    const c = (KOREA_REGIONS[s] && KOREA_REGIONS[s].districts[g]) || [37.5665, 126.978];
+    labelEl.textContent = `📍 ${s} ${g}`;
+    coordsEl.textContent = `${c[0].toFixed(4)}, ${c[1].toFixed(4)}`;
+    saveAppState();
+
+    if (regionMapInstance && marker) {
+      const targetZoom = s === '해외' ? 4 : 12;
+      regionMapInstance.flyTo(c, targetZoom, { duration: 0.6 });
+      marker.setLatLng(c);
+      marker.bindPopup(`<b>${s} ${g}</b>`).openPopup();
+    }
+  }
+
+  sidoEl.addEventListener('change', () => {
+    const nextSido = sidoEl.value;
+    state.answers.regionSido = nextSido;
+    const nextGungus = Object.keys(KOREA_REGIONS[nextSido].districts);
+    state.answers.regionGungu = nextGungus[0];
+    gunguEl.innerHTML = nextGungus.map((g) => `<option value="${g}">${g}</option>`).join('');
+    gunguEl.value = state.answers.regionGungu;
+    syncMapAndLabel();
+  });
+
+  gunguEl.addEventListener('change', () => {
+    state.answers.regionGungu = gunguEl.value;
+    syncMapAndLabel();
+  });
+
+  document.getElementById('btn-region-next').addEventListener('click', () => {
     goNextStep();
   });
   bindBackButtons();
@@ -1707,11 +1840,12 @@ function evaluateResult() {
 
   const tierObj = resolveSubTier(totalScore);
   const mbtiStr = getMbtiString(a.mbti) || '-';
+  const regionText = getRegionDisplay(a);
 
   const summaryItems = [
     { key: '이름', val: `${displayName}${a.isNamePrivate ? ' (비공개)' : ''}` },
     { key: '혈액형 · MBTI', val: `${a.bloodType || '-'} · ${mbtiStr}` },
-    { key: '거주지', val: a.region },
+    { key: '거주지', val: regionText },
     { key: '신체 · BMI', val: `${h}cm · ${w}kg (${bmi.toFixed(1)} · ${getBmiCategory(bmi)})` },
     { key: '최종 학력', val: tierOpt ? `${degOpt.label} (${tierOpt.label.split(' ')[0]})` : degOpt.label },
     { key: '고용 형태', val: empOpt.label },
@@ -1745,7 +1879,7 @@ function evaluateResult() {
     manAge,
     yearAge,
     zodiac,
-    region: a.region,
+    region: regionText,
     actualTier: tierObj.tier,
     baseTier: tierObj.base,
     totalScore,
@@ -2116,6 +2250,7 @@ document.getElementById('btn-result-back').addEventListener('click', () => {
 // 전체 초기화 및 복원
 function resetAllData() {
   clearLifeTimer();
+  clearRegionMap();
   state.currentStep = 0;
   state.answers = createDefaultAnswers();
   lastResult = null;
