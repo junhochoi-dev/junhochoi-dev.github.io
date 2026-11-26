@@ -50,15 +50,17 @@ const QUESTIONS = [
   },
   {
     id: 'job',
-    stepTitle: '현실 스펙',
-    title: '현재 직업 및 경제적 안정성은 어떤가요?',
-    desc: '결정사 서류 심사에서 가장 먼저 보는 핵심 지표입니다.',
-    type: 'single',
-    options: [
-      { label: '대기업 · 공기업 · 공무원 · 전문직', spec: 26, appeal: 8 },
-      { label: '탄탄한 중견 · 유망 스타트업 · 고소득 프리랜서', spec: 21, appeal: 7 },
-      { label: '일반 중소기업 · 개인 자영업', spec: 14, appeal: 5 },
-      { label: '취준생 · 학생 · 소득이 불규칙한 편', spec: 6, appeal: 2 }
+    stepTitle: '직업 · 소득',
+    title: '고용 형태와 순 계약 연봉을 알려주세요',
+    desc: '고용 안정성과 순수 기본급 기준으로 현실 스펙을 평가합니다.',
+    type: 'job',
+    employmentOptions: [
+      { label: '정규직 (일반 기업)', spec: 10, appeal: 6 },
+      { label: '공무원 · 공기업 · 교직원', spec: 12, appeal: 7 },
+      { label: '전문직 (의·약·법조·회계 등)', spec: 14, appeal: 8 },
+      { label: '계약직 · 파견직 · 프리랜서', spec: 5, appeal: 3 },
+      { label: '개인사업 · 자영업', spec: 7, appeal: 4 },
+      { label: '취준생 · 학생 · 무직', spec: 2, appeal: 1, zeroSalaryDefault: true }
     ]
   },
   {

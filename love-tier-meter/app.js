@@ -7,7 +7,8 @@ const state = {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
-    job: null,
+    employmentType: null,
+    salaryManwon: '',
     housing: null,
     appearance: null,
     lifestyle: [],
@@ -98,6 +99,11 @@ function renderQuestion() {
 
   if (q.type === 'profile') {
     renderProfileStep(q);
+    return;
+  }
+
+  if (q.type === 'job') {
+    renderJobStep(q);
     return;
   }
 
@@ -284,6 +290,106 @@ function renderProfileStep(q) {
   });
 }
 
+function formatSalaryKorean(manwon) {
+  if (manwon === 0) return '연 소득 0원 (무소득)';
+  const eok = Math.floor(manwon / 10000);
+  const rest = manwon % 10000;
+  if (eok > 0 && rest > 0) return `세전 연 ${eok}억 ${rest.toLocaleString()}만원`;
+  if (eok > 0) return `세전 연 ${eok}억원`;
+  return `세전 연 ${manwon.toLocaleString()}만원`;
+}
+
+function renderJobStep(q) {
+  const { employmentType, salaryManwon } = state.answers;
+  quizBody.innerHTML = `
+    <span class="q-step-badge">${q.stepTitle}</span>
+    <h2 class="q-title">${q.title}</h2>
+    <p class="q-desc">${q.desc}</p>
+    <div class="profile-form">
+      <div>
+        <span class="field-label">고용 형태</span>
+        <div class="employment-grid">
+          ${q.employmentOptions
+            .map(
+              (opt, idx) => `
+            <button type="button" class="option-btn ${employmentType === idx ? 'selected' : ''}" data-emp-idx="${idx}">
+              <span>${opt.label}</span>
+              <span class="option-check">${employmentType === idx ? '✓' : ''}</span>
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+
+      <div>
+        <span class="field-label">세전 순 계약 연봉</span>
+        <div class="salary-input-wrap">
+          <input id="input-salary" class="salary-input" type="number" inputmode="numeric" min="0" placeholder="예: 4500" value="${salaryManwon}" />
+          <span class="salary-unit">만원</span>
+        </div>
+        <p class="field-memo">※ 성과금·인센티브·각종 수당 등을 제외한 <strong>순 계약 연봉(기본급)</strong>만 입력해 주세요. (소득이 없으면 0 입력)</p>
+      </div>
+
+      <div id="salary-preview" class="age-preview" style="display:none;"></div>
+      <div id="job-error" class="error-msg"></div>
+
+      <button type="button" id="btn-job-next" class="btn-primary">다음 문항으로</button>
+    </div>
+  `;
+
+  const salaryEl = document.getElementById('input-salary');
+  const previewEl = document.getElementById('salary-preview');
+  const errorEl = document.getElementById('job-error');
+
+  function updateSalaryPreview() {
+    const raw = salaryEl.value.trim();
+    state.answers.salaryManwon = raw;
+    if (raw === '' || Number.isNaN(Number(raw)) || Number(raw) < 0) {
+      previewEl.style.display = 'none';
+      return;
+    }
+    const val = Math.floor(Number(raw));
+    previewEl.style.display = 'block';
+    previewEl.textContent = `${formatSalaryKorean(val)} 기준으로 반영됩니다.`;
+    errorEl.textContent = '';
+  }
+
+  quizBody.querySelectorAll('[data-emp-idx]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.empIdx);
+      state.answers.employmentType = idx;
+      quizBody.querySelectorAll('[data-emp-idx]').forEach((b) => {
+        const active = Number(b.dataset.empIdx) === idx;
+        b.classList.toggle('selected', active);
+        b.querySelector('.option-check').textContent = active ? '✓' : '';
+      });
+      if (q.employmentOptions[idx].zeroSalaryDefault && salaryEl.value.trim() === '') {
+        salaryEl.value = '0';
+        updateSalaryPreview();
+      }
+      errorEl.textContent = '';
+    });
+  });
+
+  salaryEl.addEventListener('input', updateSalaryPreview);
+  updateSalaryPreview();
+
+  document.getElementById('btn-job-next').addEventListener('click', () => {
+    if (state.answers.employmentType === null) {
+      errorEl.textContent = '고용 형태를 선택해 주세요.';
+      return;
+    }
+    const raw = salaryEl.value.trim();
+    const num = Number(raw);
+    if (raw === '' || Number.isNaN(num) || num < 0 || num > 1000000) {
+      errorEl.textContent = '순 계약 연봉을 만원 단위 숫자로 입력해 주세요. (0 이상)';
+      return;
+    }
+    goNextStep();
+  });
+}
+
 function goNextStep() {
   if (state.currentStep < QUESTIONS.length - 1) {
     state.currentStep += 1;
@@ -320,10 +426,43 @@ function runAnalysis() {
 
 // 등급 산정 엔진
 function evaluateResult() {
-  const { gender, birthYear, birthMonth, birthDay, job, housing, appearance, lifestyle, spending, communication, standard } = state.answers;
+  const {
+    gender,
+    birthYear,
+    birthMonth,
+    birthDay,
+    employmentType,
+    salaryManwon,
+    housing,
+    appearance,
+    lifestyle,
+    spending,
+    communication,
+    standard
+  } = state.answers;
   const { age, zodiac } = calculateAgeAndZodiac(Number(birthYear), Number(birthMonth), Number(birthDay));
 
-  const jobOpt = QUESTIONS[1].options[job];
+  const empOpt = QUESTIONS[1].employmentOptions[employmentType];
+  const salary = Number(salaryManwon) || 0;
+  let salarySpec = 2;
+  let salaryAppeal = 1;
+  if (salary >= 10000) {
+    salarySpec = 18;
+    salaryAppeal = 7;
+  } else if (salary >= 7000) {
+    salarySpec = 15;
+    salaryAppeal = 6;
+  } else if (salary >= 5000) {
+    salarySpec = 12;
+    salaryAppeal = 5;
+  } else if (salary >= 3500) {
+    salarySpec = 8;
+    salaryAppeal = 3;
+  } else if (salary >= 2000) {
+    salarySpec = 5;
+    salaryAppeal = 2;
+  }
+
   const housingOpt = QUESTIONS[2].options[housing];
   const appOpt = QUESTIONS[3].options[appearance];
   const spendOpt = QUESTIONS[5].options[spending];
@@ -343,9 +482,9 @@ function evaluateResult() {
     else ageScore = 6;
   }
 
-  // 2) 현실 스펙 (직업 + 주거 + 외모일부 + 나이) -> 100점 환산
-  const rawSpec = jobOpt.spec + housingOpt.spec + appOpt.spec + ageScore; // max ~75
-  const specPercent = Math.min(100, Math.round((rawSpec / 75) * 100));
+  // 2) 현실 스펙 (고용형태 + 연봉 + 주거 + 외모일부 + 나이) -> 100점 환산
+  const rawSpec = empOpt.spec + salarySpec + housingOpt.spec + appOpt.spec + ageScore; // max ~81
+  const specPercent = Math.min(100, Math.round((rawSpec / 81) * 100));
 
   // 3) 연애 성향 (소비관 + 소통) -> 100점 환산
   const rawLove = spendOpt.love + commOpt.love; // max 34
@@ -362,8 +501,8 @@ function evaluateResult() {
   });
 
   // 5) 시장 호감도 -> 100점 환산
-  const rawAppeal = jobOpt.appeal + housingOpt.appeal + appOpt.appeal + spendOpt.appeal + commOpt.appeal - hurdlePenalty * 0.8;
-  const appealPercent = Math.max(10, Math.min(100, Math.round(((rawAppeal + 6) / 50) * 100)));
+  const rawAppeal = empOpt.appeal + salaryAppeal + housingOpt.appeal + appOpt.appeal + spendOpt.appeal + commOpt.appeal - hurdlePenalty * 0.8;
+  const appealPercent = Math.max(10, Math.min(100, Math.round(((rawAppeal + 6) / 57) * 100)));
 
   // 6) 메타인지(눈높이 균형) -> 100점 환산
   let eyePenalty = 0;
@@ -577,7 +716,8 @@ document.getElementById('btn-retry').addEventListener('click', () => {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
-    job: null,
+    employmentType: null,
+    salaryManwon: '',
     housing: null,
     appearance: null,
     lifestyle: [],

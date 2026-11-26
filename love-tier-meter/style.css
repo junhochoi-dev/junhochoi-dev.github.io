@@ -422,6 +422,61 @@ body {
   min-height: 18px;
 }
 
+.employment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.employment-grid .option-btn {
+  padding: 12px;
+  font-size: 13.5px;
+}
+
+.salary-input-wrap {
+  position: relative;
+}
+
+.salary-input {
+  width: 100%;
+  padding: 14px 54px 14px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-muted);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.salary-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #ffffff;
+}
+
+.salary-unit {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--text-sub);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.field-memo {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-sub);
+  background: var(--surface-muted);
+  border-left: 3px solid var(--primary);
+  padding: 8px 10px;
+  border-radius: 0 8px 8px 0;
+  line-height: 1.45;
+}
+
 /* 로딩 */
 .loading-card {
   text-align: center;
