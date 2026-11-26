@@ -4,7 +4,7 @@ layout: default
 
 <div class="page-banner">
 <h1 class="page-banner-title">{{ page.title | escape }}</h1>
-<p class="page-banner-desc">암호화된 비공개 메모 공간</p>
+<p class="page-banner-desc">암호화된 비공개 메모 &amp; 자격증 정리 공간</p>
 </div>
 
 <div id="vault-lock" class="vault-box">
@@ -27,7 +27,13 @@ layout: default
     <div id="vault-breadcrumb" class="vault-breadcrumb"></div>
     <button type="button" id="vault-relock" class="vault-relock-btn">다시 잠그기</button>
   </div>
-  <div id="vault-view"></div>
+  <div class="vault-layout">
+    <aside class="vault-sidebar">
+      <div class="vault-sidebar-title">Explorer</div>
+      <div id="vault-tree" class="vault-tree"></div>
+    </aside>
+    <main id="vault-main" class="vault-main"></main>
+  </div>
 </div>
 
 <script id="vault-payload" type="text/plain">{{ page.encrypted_payload }}</script>
@@ -86,7 +92,7 @@ layout: default
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     padding-bottom: 0.85rem;
     border-bottom: 1px solid #e5e5e5;
   }
@@ -94,22 +100,9 @@ layout: default
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.45rem;
-    font-size: 0.92rem;
+    gap: 0.4rem;
+    font-size: 0.9rem;
     color: #737373;
-  }
-  .vault-crumb-btn {
-    padding: 0.25rem 0.6rem;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    background: transparent;
-    color: #0a0a0a;
-    font-size: 0.92rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .vault-crumb-btn:hover {
-    background: #f5f5f5;
   }
   .vault-crumb-current {
     font-weight: 700;
@@ -129,122 +122,93 @@ layout: default
     background: #f5f5f5;
     border-color: #0a0a0a;
   }
-  .vault-folder-grid {
+  .vault-layout {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
+    grid-template-columns: 320px 1fr;
+    gap: 1.5rem;
+    align-items: start;
   }
-  .vault-folder-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 1.5rem;
+  .vault-sidebar {
+    padding: 1.1rem;
     border: 1px solid #e5e5e5;
     border-radius: 12px;
-    background: #ffffff;
-    text-align: left;
-    cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    background: #fafafa;
   }
-  .vault-folder-card:hover {
-    transform: translateY(-2px);
-    border-color: #0a0a0a;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  }
-  .vault-folder-icon {
-    font-size: 1.6rem;
-    margin-bottom: 0.6rem;
-  }
-  .vault-folder-name {
-    margin: 0 0 0.3rem 0;
-    font-size: 1.12rem;
+  .vault-sidebar-title {
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 0.78rem;
     font-weight: 700;
-    color: #0a0a0a;
-  }
-  .vault-folder-count {
-    font-size: 0.86rem;
     color: #737373;
-    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-  .vault-post-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
+  .vault-tree-children {
+    margin-left: 0.85rem;
+    padding-left: 0.65rem;
+    border-left: 1px solid #e5e5e5;
   }
-  .vault-post-row {
+  .vault-tree-folder,
+  .vault-tree-file {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
+    align-items: flex-start;
+    gap: 0.45rem;
     width: 100%;
-    padding: 1.2rem 1.4rem;
-    border: 1px solid #e5e5e5;
-    border-left: 4px solid #0a0a0a;
-    border-radius: 10px;
-    background: #ffffff;
+    padding: 0.42rem 0.55rem;
+    margin-bottom: 0.2rem;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #262626;
+    font-size: 0.88rem;
+    line-height: 1.4;
     text-align: left;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .vault-post-row:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
-  }
-  .vault-post-row-title {
-    margin: 0 0 0.35rem 0;
-    font-size: 1.1rem;
+  .vault-tree-folder {
     font-weight: 700;
     color: #0a0a0a;
   }
-  .vault-post-row-date {
-    font-size: 0.85rem;
-    color: #737373;
-    white-space: nowrap;
+  .vault-tree-folder:hover,
+  .vault-tree-file:hover {
+    background: #efefef;
   }
-  .vault-back-btn {
-    display: inline-block;
-    margin-bottom: 1rem;
-    padding: 0.4rem 0.85rem;
-    border: 1px solid #d4d4d4;
-    border-radius: 8px;
-    background: #ffffff;
-    color: #0a0a0a;
-    font-size: 0.85rem;
+  .vault-tree-file.active {
+    background: #0a0a0a;
+    color: #ffffff;
     font-weight: 600;
-    cursor: pointer;
   }
-  .vault-back-btn:hover {
-    background: #f5f5f5;
-    border-color: #0a0a0a;
+  .vault-main {
+    min-width: 0;
   }
   .vault-detail-card {
     padding: 2rem;
     border: 1px solid #e5e5e5;
     border-left: 4px solid #0a0a0a;
-    border-radius: 10px;
+    border-radius: 12px;
     background: #ffffff;
   }
-  .vault-card-cat {
+  .vault-card-path {
     display: inline-block;
-    margin-bottom: 0.6rem;
-    padding: 0.18rem 0.6rem;
+    margin-bottom: 0.65rem;
+    padding: 0.2rem 0.65rem;
     border-radius: 999px;
     background: #0a0a0a;
     color: #ffffff;
-    font-size: 0.75rem;
+    font-size: 0.76rem;
     font-weight: 600;
   }
   .vault-card-title {
     margin: 0 0 0.45rem 0;
-    font-size: 1.45rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: #0a0a0a;
   }
   .vault-card-meta {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.35rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #f0f0f0;
     font-size: 0.86rem;
     color: #737373;
   }
@@ -259,8 +223,28 @@ layout: default
     font-size: 0.78rem;
     font-weight: 600;
   }
-  @media (max-width: 768px) {
-    .vault-folder-grid {
+  .vault-card-body pre {
+    padding: 1rem;
+    border-radius: 8px;
+    background: #0a0a0a;
+    color: #fafafa;
+    overflow-x: auto;
+    font-size: 0.88rem;
+  }
+  .vault-card-body code {
+    background: #f5f5f5;
+    color: #0a0a0a;
+    padding: 0.12rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+  .vault-card-body pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+  @media (max-width: 900px) {
+    .vault-layout {
       grid-template-columns: 1fr;
     }
   }
@@ -274,13 +258,14 @@ layout: default
   const pwInput = document.getElementById('vault-password');
   const errorEl = document.getElementById('vault-error');
   const breadcrumbEl = document.getElementById('vault-breadcrumb');
-  const viewEl = document.getElementById('vault-view');
+  const treeEl = document.getElementById('vault-tree');
+  const mainEl = document.getElementById('vault-main');
   const relockBtn = document.getElementById('vault-relock');
   const payloadB64 = document.getElementById('vault-payload').textContent.trim();
 
   let allPosts = [];
-  let selectedCategory = null; // null -> folder list view
-  let selectedPostId = null;   // null -> post list view
+  let selectedPostId = null;
+  const openFolders = {};
 
   function b64ToBytes(b64) {
     const bin = atob(b64);
@@ -320,181 +305,119 @@ layout: default
     return JSON.parse(new TextDecoder().decode(decrypted));
   }
 
-  function renderBreadcrumb() {
-    breadcrumbEl.innerHTML = '';
-
-    const rootBtn = document.createElement('button');
-    rootBtn.type = 'button';
-    rootBtn.className = 'vault-crumb-btn';
-    rootBtn.textContent = '🔓 Vault';
-    rootBtn.addEventListener('click', function () {
-      selectedCategory = null;
-      selectedPostId = null;
-      render();
-    });
-    breadcrumbEl.appendChild(rootBtn);
-
-    if (selectedCategory) {
-      const sep1 = document.createElement('span');
-      sep1.textContent = '/';
-      breadcrumbEl.appendChild(sep1);
-
-      if (selectedPostId) {
-        const catBtn = document.createElement('button');
-        catBtn.type = 'button';
-        catBtn.className = 'vault-crumb-btn';
-        catBtn.textContent = selectedCategory;
-        catBtn.addEventListener('click', function () {
-          selectedPostId = null;
-          render();
-        });
-        breadcrumbEl.appendChild(catBtn);
-
-        const sep2 = document.createElement('span');
-        sep2.textContent = '/';
-        breadcrumbEl.appendChild(sep2);
-
-        const post = allPosts.find(function (p) { return p.id === selectedPostId; });
-        const cur = document.createElement('span');
-        cur.className = 'vault-crumb-current';
-        cur.textContent = post ? post.title : '';
-        breadcrumbEl.appendChild(cur);
-      } else {
-        const catCur = document.createElement('span');
-        catCur.className = 'vault-crumb-current';
-        catCur.textContent = selectedCategory;
-        breadcrumbEl.appendChild(catCur);
-      }
-    }
-  }
-
-  function renderFolders() {
-    const counts = {};
-    const categories = [];
-    allPosts.forEach(function (post) {
-      const cat = post.category || 'General';
-      if (!counts[cat]) {
-        counts[cat] = 0;
-        categories.push(cat);
-      }
-      counts[cat] += 1;
-    });
-
-    const grid = document.createElement('div');
-    grid.className = 'vault-folder-grid';
-
-    categories.forEach(function (cat) {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'vault-folder-card';
-      card.addEventListener('click', function () {
-        selectedCategory = cat;
-        selectedPostId = null;
-        render();
+  function buildTree(posts) {
+    const root = { folders: {}, folderOrder: [], posts: [] };
+    posts.forEach(function (post) {
+      const segments = Array.isArray(post.path)
+        ? post.path
+        : (post.category ? [post.category] : []);
+      let node = root;
+      let prefix = '';
+      segments.forEach(function (seg) {
+        prefix = prefix ? prefix + '/' + seg : seg;
+        if (!node.folders[seg]) {
+          node.folders[seg] = { name: seg, key: prefix, folders: {}, folderOrder: [], posts: [] };
+          node.folderOrder.push(seg);
+          if (openFolders[prefix] === undefined) {
+            openFolders[prefix] = true;
+          }
+        }
+        node = node.folders[seg];
       });
-
-      const icon = document.createElement('div');
-      icon.className = 'vault-folder-icon';
-      icon.textContent = '📁';
-      card.appendChild(icon);
-
-      const name = document.createElement('h2');
-      name.className = 'vault-folder-name';
-      name.textContent = cat;
-      card.appendChild(name);
-
-      const count = document.createElement('div');
-      count.className = 'vault-folder-count';
-      count.textContent = counts[cat] + '개의 게시물 →';
-      card.appendChild(count);
-
-      grid.appendChild(card);
+      node.posts.push(post);
     });
-
-    viewEl.appendChild(grid);
+    return root;
   }
 
-  function renderPostList() {
-    const backBtn = document.createElement('button');
-    backBtn.type = 'button';
-    backBtn.className = 'vault-back-btn';
-    backBtn.textContent = '← 폴더 목록으로';
-    backBtn.addEventListener('click', function () {
-      selectedCategory = null;
-      selectedPostId = null;
-      render();
+  function renderTreeNode(node, container) {
+    node.folderOrder.forEach(function (folderName) {
+      const folder = node.folders[folderName];
+      const isOpen = !!openFolders[folder.key];
+
+      const folderBtn = document.createElement('button');
+      folderBtn.type = 'button';
+      folderBtn.className = 'vault-tree-folder';
+      folderBtn.textContent = (isOpen ? '▾ 📁 ' : '▸ 📁 ') + folder.name;
+      folderBtn.addEventListener('click', function () {
+        openFolders[folder.key] = !openFolders[folder.key];
+        renderTree();
+      });
+      container.appendChild(folderBtn);
+
+      if (isOpen) {
+        const childWrap = document.createElement('div');
+        childWrap.className = 'vault-tree-children';
+        renderTreeNode(folder, childWrap);
+        container.appendChild(childWrap);
+      }
     });
-    viewEl.appendChild(backBtn);
 
-    const list = document.createElement('div');
-    list.className = 'vault-post-list';
-
-    const filtered = allPosts.filter(function (p) {
-      return (p.category || 'General') === selectedCategory;
-    });
-
-    filtered.forEach(function (post) {
-      const row = document.createElement('button');
-      row.type = 'button';
-      row.className = 'vault-post-row';
-      row.addEventListener('click', function () {
+    node.posts.forEach(function (post) {
+      const fileBtn = document.createElement('button');
+      fileBtn.type = 'button';
+      fileBtn.className = 'vault-tree-file' + (post.id === selectedPostId ? ' active' : '');
+      fileBtn.textContent = '📄 ' + post.title;
+      fileBtn.addEventListener('click', function () {
         selectedPostId = post.id;
         render();
       });
-
-      const left = document.createElement('div');
-      const title = document.createElement('h3');
-      title.className = 'vault-post-row-title';
-      title.textContent = post.title;
-      left.appendChild(title);
-
-      if (Array.isArray(post.tags)) {
-        post.tags.forEach(function (tag) {
-          const span = document.createElement('span');
-          span.className = 'vault-tag';
-          span.textContent = '#' + tag;
-          left.appendChild(span);
-        });
-      }
-      row.appendChild(left);
-
-      const date = document.createElement('div');
-      date.className = 'vault-post-row-date';
-      date.textContent = (post.date || '') + ' →';
-      row.appendChild(date);
-
-      list.appendChild(row);
+      container.appendChild(fileBtn);
     });
-
-    viewEl.appendChild(list);
   }
 
-  function renderPostDetail() {
-    const post = allPosts.find(function (p) { return p.id === selectedPostId; });
-    if (!post) {
-      selectedPostId = null;
-      renderPostList();
-      return;
-    }
+  function renderTree() {
+    treeEl.innerHTML = '';
+    const tree = buildTree(allPosts);
+    renderTreeNode(tree, treeEl);
+  }
 
-    const backBtn = document.createElement('button');
-    backBtn.type = 'button';
-    backBtn.className = 'vault-back-btn';
-    backBtn.textContent = '← ' + selectedCategory + ' 목록으로';
-    backBtn.addEventListener('click', function () {
-      selectedPostId = null;
-      render();
+  function renderBreadcrumb(post) {
+    breadcrumbEl.innerHTML = '';
+    const rootSpan = document.createElement('span');
+    rootSpan.className = 'vault-crumb-current';
+    rootSpan.textContent = '🔓 Vault';
+    breadcrumbEl.appendChild(rootSpan);
+
+    if (!post) return;
+    const segments = Array.isArray(post.path)
+      ? post.path
+      : (post.category ? [post.category] : []);
+
+    segments.forEach(function (seg) {
+      const sep = document.createElement('span');
+      sep.textContent = '/';
+      breadcrumbEl.appendChild(sep);
+
+      const s = document.createElement('span');
+      s.textContent = seg;
+      breadcrumbEl.appendChild(s);
     });
-    viewEl.appendChild(backBtn);
+
+    const sepLast = document.createElement('span');
+    sepLast.textContent = '/';
+    breadcrumbEl.appendChild(sepLast);
+
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'vault-crumb-current';
+    titleSpan.textContent = post.title;
+    breadcrumbEl.appendChild(titleSpan);
+  }
+
+  function renderMain(post) {
+    mainEl.innerHTML = '';
+    if (!post) return;
 
     const card = document.createElement('section');
     card.className = 'vault-detail-card';
 
-    if (post.category) {
-      const catBadge = document.createElement('span');
-      catBadge.className = 'vault-card-cat';
-      catBadge.textContent = post.category;
-      card.appendChild(catBadge);
+    const segments = Array.isArray(post.path)
+      ? post.path
+      : (post.category ? [post.category] : []);
+    if (segments.length > 0) {
+      const pathBadge = document.createElement('span');
+      pathBadge.className = 'vault-card-path';
+      pathBadge.textContent = segments.join(' / ');
+      card.appendChild(pathBadge);
     }
 
     const title = document.createElement('h2');
@@ -523,19 +446,15 @@ layout: default
     body.innerHTML = post.content || '';
     card.appendChild(body);
 
-    viewEl.appendChild(card);
+    mainEl.appendChild(card);
   }
 
   function render() {
-    renderBreadcrumb();
-    viewEl.innerHTML = '';
-    if (!selectedCategory) {
-      renderFolders();
-    } else if (!selectedPostId) {
-      renderPostList();
-    } else {
-      renderPostDetail();
-    }
+    const post = allPosts.find(function (p) { return p.id === selectedPostId; }) || allPosts[0];
+    if (post) selectedPostId = post.id;
+    renderBreadcrumb(post);
+    renderTree();
+    renderMain(post);
   }
 
   form.addEventListener('submit', async function (e) {
@@ -543,8 +462,7 @@ layout: default
     errorEl.hidden = true;
     try {
       allPosts = await decryptPayload(pwInput.value);
-      selectedCategory = null;
-      selectedPostId = null;
+      selectedPostId = allPosts.length ? allPosts[0].id : null;
       render();
       pwInput.value = '';
       lockBox.hidden = true;
@@ -557,10 +475,10 @@ layout: default
 
   relockBtn.addEventListener('click', function () {
     allPosts = [];
-    selectedCategory = null;
     selectedPostId = null;
     breadcrumbEl.innerHTML = '';
-    viewEl.innerHTML = '';
+    treeEl.innerHTML = '';
+    mainEl.innerHTML = '';
     unlockedBox.hidden = true;
     lockBox.hidden = false;
     pwInput.value = '';
