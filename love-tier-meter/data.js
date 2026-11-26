@@ -49,6 +49,20 @@ const QUESTIONS = [
     type: 'profile'
   },
   {
+    id: 'education',
+    stepTitle: '학력',
+    title: '최종 학력은 어떻게 되시나요?',
+    desc: '결정사 서류 등급 산정 시 기본 스펙으로 반영됩니다.',
+    type: 'single',
+    options: [
+      { label: '최상위권 명문대 · 의약학계열 · 해외 명문대', spec: 12, appeal: 6 },
+      { label: '인서울 주요 대학 · 상위 거점국립대 · 석·박사', spec: 10, appeal: 5 },
+      { label: '일반 4년제 대학 졸업', spec: 7, appeal: 3 },
+      { label: '전문대 졸업', spec: 4, appeal: 2 },
+      { label: '고등학교 졸업 이하', spec: 2, appeal: 1 }
+    ]
+  },
+  {
     id: 'job',
     stepTitle: '직업 · 소득',
     title: '고용 형태와 순 계약 연봉을 알려주세요',

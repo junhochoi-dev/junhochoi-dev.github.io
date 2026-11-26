@@ -7,6 +7,7 @@ const state = {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
+    education: null,
     employmentType: null,
     salaryManwon: '',
     housing: null,
@@ -425,12 +426,17 @@ function runAnalysis() {
 }
 
 // 등급 산정 엔진
+function getQuestionById(id) {
+  return QUESTIONS.find((q) => q.id === id);
+}
+
 function evaluateResult() {
   const {
     gender,
     birthYear,
     birthMonth,
     birthDay,
+    education,
     employmentType,
     salaryManwon,
     housing,
@@ -442,7 +448,8 @@ function evaluateResult() {
   } = state.answers;
   const { age, zodiac } = calculateAgeAndZodiac(Number(birthYear), Number(birthMonth), Number(birthDay));
 
-  const empOpt = QUESTIONS[1].employmentOptions[employmentType];
+  const eduOpt = getQuestionById('education').options[education];
+  const empOpt = getQuestionById('job').employmentOptions[employmentType];
   const salary = Number(salaryManwon) || 0;
   let salarySpec = 2;
   let salaryAppeal = 1;
@@ -463,11 +470,11 @@ function evaluateResult() {
     salaryAppeal = 2;
   }
 
-  const housingOpt = QUESTIONS[2].options[housing];
-  const appOpt = QUESTIONS[3].options[appearance];
-  const spendOpt = QUESTIONS[5].options[spending];
-  const commOpt = QUESTIONS[6].options[communication];
-  const stdOpt = QUESTIONS[7].options[standard];
+  const housingOpt = getQuestionById('housing').options[housing];
+  const appOpt = getQuestionById('appearance').options[appearance];
+  const spendOpt = getQuestionById('spending').options[spending];
+  const commOpt = getQuestionById('communication').options[communication];
+  const stdOpt = getQuestionById('standard').options[standard];
 
   // 1) 연령 시장 가중치 (결정사 현실 반영, 최대 15점)
   let ageScore = 10;
@@ -482,16 +489,16 @@ function evaluateResult() {
     else ageScore = 6;
   }
 
-  // 2) 현실 스펙 (고용형태 + 연봉 + 주거 + 외모일부 + 나이) -> 100점 환산
-  const rawSpec = empOpt.spec + salarySpec + housingOpt.spec + appOpt.spec + ageScore; // max ~81
-  const specPercent = Math.min(100, Math.round((rawSpec / 81) * 100));
+  // 2) 현실 스펙 (학력 + 고용형태 + 연봉 + 주거 + 외모일부 + 나이) -> 100점 환산
+  const rawSpec = eduOpt.spec + empOpt.spec + salarySpec + housingOpt.spec + appOpt.spec + ageScore; // max ~93
+  const specPercent = Math.min(100, Math.round((rawSpec / 93) * 100));
 
   // 3) 연애 성향 (소비관 + 소통) -> 100점 환산
   const rawLove = spendOpt.love + commOpt.love; // max 34
   const lovePercent = Math.max(10, Math.min(100, Math.round((rawLove / 34) * 100)));
 
   // 4) 생활 허들 페널티
-  const lifestyleOpts = QUESTIONS[4].options;
+  const lifestyleOpts = getQuestionById('lifestyle').options;
   let hurdlePenalty = 0;
   const hurdleTags = [];
   lifestyle.forEach((idx) => {
@@ -501,8 +508,8 @@ function evaluateResult() {
   });
 
   // 5) 시장 호감도 -> 100점 환산
-  const rawAppeal = empOpt.appeal + salaryAppeal + housingOpt.appeal + appOpt.appeal + spendOpt.appeal + commOpt.appeal - hurdlePenalty * 0.8;
-  const appealPercent = Math.max(10, Math.min(100, Math.round(((rawAppeal + 6) / 57) * 100)));
+  const rawAppeal = eduOpt.appeal + empOpt.appeal + salaryAppeal + housingOpt.appeal + appOpt.appeal + spendOpt.appeal + commOpt.appeal - hurdlePenalty * 0.8;
+  const appealPercent = Math.max(10, Math.min(100, Math.round(((rawAppeal + 6) / 63) * 100)));
 
   // 6) 메타인지(눈높이 균형) -> 100점 환산
   let eyePenalty = 0;
@@ -539,7 +546,7 @@ function evaluateResult() {
     hurdleTags,
     eyePenalty,
     metrics: [
-      { label: '현실 스펙 (직업·자산·연령)', score: specPercent },
+      { label: '현실 스펙 (학력·직업·자산·연령)', score: specPercent },
       { label: '연애 성향 (경제관·소통)', score: lovePercent },
       { label: '시장 호감도 (매력·유연함)', score: appealPercent },
       { label: '메타인지 (눈높이 균형)', score: metaPercent }
@@ -716,6 +723,7 @@ document.getElementById('btn-retry').addEventListener('click', () => {
     birthYear: '',
     birthMonth: '',
     birthDay: '',
+    education: null,
     employmentType: null,
     salaryManwon: '',
     housing: null,
