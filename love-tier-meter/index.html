@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>연애등급측정기 | 내 결정사 현실 등급은?</title>
+  <meta name="description" content="내가 생각하는 내 등급 vs 실제 결정사 판정 등급! 40초 만에 확인하는 현실 연애·결혼 등급 테스트" />
+  <meta property="og:title" content="연애등급측정기 - 내 결정사 현실 등급은?" />
+  <meta property="og:description" content="내 예상 등급과 실제 매니저 판정 등급의 차이를 확인해 보세요." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <span class="brand-badge">SOLO RATING LAB</span>
+      <span class="topbar-sub">비공식 결정사 모의 판정</span>
+    </header>
+
+    <!-- 1. 인트로 화면 -->
+    <main id="screen-intro" class="screen active">
+      <div class="hero-card">
+        <div class="hero-tag">40초 현실 자각 테스트</div>
+        <h1 class="hero-title">연애등급측정기</h1>
+        <p class="hero-desc">
+          결혼정보회사에 내 프로필을 접수한다면<br />
+          수석 매니저는 몇 등급을 줄까요?
+        </p>
+
+        <div class="expected-box">
+          <p class="expected-label">먼저, <strong>내가 생각하는 내 등급</strong>을 골라주세요</p>
+          <div class="tier-selector" id="expected-tier-selector" role="radiogroup" aria-label="예상 등급 선택">
+            <button type="button" class="tier-chip" data-tier="S">
+              <span class="tier-letter">S</span>
+              <span class="tier-hint">상위 5%</span>
+            </button>
+            <button type="button" class="tier-chip" data-tier="A">
+              <span class="tier-letter">A</span>
+              <span class="tier-hint">1군 인기</span>
+            </button>
+            <button type="button" class="tier-chip" data-tier="B">
+              <span class="tier-letter">B</span>
+              <span class="tier-hint">무난 호감</span>
+            </button>
+            <button type="button" class="tier-chip" data-tier="C">
+              <span class="tier-letter">C</span>
+              <span class="tier-hint">조율 필요</span>
+            </button>
+            <button type="button" class="tier-chip" data-tier="D">
+              <span class="tier-letter">D</span>
+              <span class="tier-hint">비상 호출</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="button" id="btn-start" class="btn-primary" disabled>
+          예상 등급을 선택하면 시작합니다
+        </button>
+        <p class="privacy-note">※ 입력한 정보는 브라우저에서만 계산되며 어디에도 저장되지 않습니다.</p>
+      </div>
+    </main>
+
+    <!-- 2. 질문 화면 -->
+    <main id="screen-quiz" class="screen">
+      <div class="quiz-header">
+        <button type="button" id="btn-prev" class="btn-ghost" aria-label="이전 문항">← 이전</button>
+        <span id="progress-text" class="progress-text">1 / 8</span>
+      </div>
+      <div class="progress-track">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+
+      <section id="quiz-body" class="quiz-card">
+        <!-- JS로 문항 렌더링 -->
+      </section>
+    </main>
+
+    <!-- 3. 로딩 화면 -->
+    <main id="screen-loading" class="screen">
+      <div class="loading-card">
+        <div class="scanner-ring"></div>
+        <h2 class="loading-title">서류 정밀 심사 중...</h2>
+        <p id="loading-status" class="loading-status">현실 스펙과 시장 수요를 대조하고 있습니다.</p>
+      </div>
+    </main>
+
+    <!-- 4. 결과 화면 -->
+    <main id="screen-result" class="screen">
+      <article class="result-card" id="result-card">
+        <div class="result-header">
+          <div class="result-meta">
+            <span id="result-profile-badge" class="profile-badge">만 30세 · 쥐띠 · 여성</span>
+            <span class="doc-id" id="result-doc-id">NO. 2026-001</span>
+          </div>
+          <h2 class="result-title">결정사 모의 판정 리포트</h2>
+        </div>
+
+        <div class="tier-compare">
+          <div class="compare-box expected">
+            <span class="compare-label">내 예상</span>
+            <span id="res-expected-tier" class="compare-tier">B</span>
+          </div>
+          <div class="compare-arrow">→</div>
+          <div class="compare-box actual" id="res-actual-box">
+            <span class="compare-label">실제 판정</span>
+            <span id="res-actual-tier" class="compare-tier">D</span>
+          </div>
+        </div>
+
+        <div id="res-gap-pill" class="gap-pill">메타인지 점검 필요</div>
+
+        <div class="verdict-box">
+          <h3 id="res-headline" class="verdict-headline">“조건은 좋은데 매칭 풀을 스스로 좁히셨네요.”</h3>
+          <p id="res-comment" class="verdict-comment"></p>
+        </div>
+
+        <div class="metrics-section">
+          <h4 class="section-subtitle">항목별 평가 점수</h4>
+          <div id="res-metrics" class="metrics-list">
+            <!-- JS로 4개 지표 바 렌더링 -->
+          </div>
+        </div>
+
+        <div class="advice-box">
+          <h4 class="section-subtitle">매니저 처방전</h4>
+          <p id="res-advice" class="advice-text"></p>
+        </div>
+      </article>
+
+      <div class="result-actions">
+        <button type="button" id="btn-save-img" class="btn-primary">결과 카드 이미지 저장</button>
+        <div class="action-row">
+          <button type="button" id="btn-copy-link" class="btn-secondary">결과 텍스트 복사</button>
+          <button type="button" id="btn-retry" class="btn-secondary">다시 측정하기</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>재미로 보는 토이 프로젝트 · 실제 결혼정보회사 기준과 다를 수 있습니다.</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
