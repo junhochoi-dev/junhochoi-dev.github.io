@@ -488,68 +488,43 @@ body {
   font-weight: 800;
 }
 
-.tier-compare {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-bottom: 12px;
-}
-
-.compare-box {
-  flex: 1;
-  border-radius: 14px;
-  padding: 14px 10px;
+.tier-result-hero {
+  border-radius: 16px;
+  padding: 22px 16px;
   text-align: center;
-  border: 1.5px solid var(--border);
-  background: var(--surface-muted);
-}
-
-.compare-box.actual {
   color: #ffffff;
-  border-color: transparent;
+  margin-bottom: 18px;
 }
 
-.compare-box.actual.tier-S { background: var(--tier-s); }
-.compare-box.actual.tier-A { background: var(--tier-a); }
-.compare-box.actual.tier-B { background: var(--tier-b); }
-.compare-box.actual.tier-C { background: var(--tier-c); }
-.compare-box.actual.tier-D { background: var(--tier-d); }
+.tier-result-hero.tier-S { background: var(--tier-s); }
+.tier-result-hero.tier-A { background: var(--tier-a); }
+.tier-result-hero.tier-B { background: var(--tier-b); }
+.tier-result-hero.tier-C { background: var(--tier-c); }
+.tier-result-hero.tier-D { background: var(--tier-d); }
 
 .compare-label {
   display: block;
   font-size: 12px;
   font-weight: 600;
-  opacity: 0.85;
-  margin-bottom: 2px;
+  opacity: 0.88;
+  margin-bottom: 4px;
 }
 
-.compare-tier {
-  font-size: 36px;
+.hero-tier-letter {
+  display: block;
+  font-size: 52px;
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1.05;
+  margin-bottom: 6px;
 }
 
-.compare-arrow {
-  font-size: 22px;
-  font-weight: 800;
-  color: #9aa1ae;
-}
-
-.gap-pill {
-  text-align: center;
+.hero-tier-sub {
+  display: inline-block;
   font-size: 13px;
   font-weight: 700;
-  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
   border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  margin-bottom: 18px;
-}
-
-.gap-pill.good {
-  background: #ecfdf5;
-  color: #059669;
 }
 
 .verdict-box {

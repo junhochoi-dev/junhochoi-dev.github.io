@@ -1,7 +1,6 @@
 // 연애등급측정기 앱 상태 및 판정 엔진
 
 const state = {
-  expectedTier: null,
   currentStep: 0,
   answers: {
     gender: null,
@@ -26,7 +25,6 @@ const screens = {
   result: document.getElementById('screen-result')
 };
 
-const expectedSelector = document.getElementById('expected-tier-selector');
 const btnStart = document.getElementById('btn-start');
 const btnPrev = document.getElementById('btn-prev');
 const progressText = document.getElementById('progress-text');
@@ -45,17 +43,6 @@ function showToast(msg) {
   toastEl.classList.add('show');
   setTimeout(() => toastEl.classList.remove('show'), 2200);
 }
-
-// 예상 등급 선택
-expectedSelector.addEventListener('click', (e) => {
-  const chip = e.target.closest('.tier-chip');
-  if (!chip) return;
-  expectedSelector.querySelectorAll('.tier-chip').forEach((c) => c.classList.remove('selected'));
-  chip.classList.add('selected');
-  state.expectedTier = chip.dataset.tier;
-  btnStart.disabled = false;
-  btnStart.textContent = `예상 ${state.expectedTier}등급으로 측정 시작하기`;
-});
 
 btnStart.addEventListener('click', () => {
   state.currentStep = 0;
@@ -408,7 +395,6 @@ function evaluateResult() {
     genderLabel: gender === 'male' ? '남성' : '여성',
     age,
     zodiac,
-    expectedTier: state.expectedTier,
     actualTier,
     totalScore,
     hurdleTags,
@@ -430,28 +416,11 @@ function renderResult(res) {
 
   document.getElementById('result-profile-badge').textContent = `만 ${res.age}세 · ${res.zodiac}띠 · ${res.genderLabel}`;
   document.getElementById('result-doc-id').textContent = `SCORE ${res.totalScore} / 100`;
-  document.getElementById('res-expected-tier').textContent = res.expectedTier;
 
   const actualBox = document.getElementById('res-actual-box');
-  actualBox.className = `compare-box actual tier-${res.actualTier}`;
+  actualBox.className = `tier-result-hero tier-${res.actualTier}`;
   document.getElementById('res-actual-tier').textContent = res.actualTier;
-
-  // 예상 vs 실제 갭 메시지
-  const expIdx = TIER_ORDER.indexOf(res.expectedTier);
-  const actIdx = TIER_ORDER.indexOf(res.actualTier);
-  const diff = actIdx - expIdx; // 양수면 기대보다 낮음
-  const gapPill = document.getElementById('res-gap-pill');
-
-  if (diff === 0) {
-    gapPill.textContent = `정확한 메타인지! 예상과 실제(${res.actualTier}등급)가 일치합니다`;
-    gapPill.className = 'gap-pill good';
-  } else if (diff < 0) {
-    gapPill.textContent = `겸손하시네요! 예상보다 ${Math.abs(diff)}단계 높은 ${res.actualTier}등급 판정`;
-    gapPill.className = 'gap-pill good';
-  } else {
-    gapPill.textContent = `현실 자각 경보! 예상(${res.expectedTier})보다 ${diff}단계 낮은 ${res.actualTier}등급`;
-    gapPill.className = 'gap-pill';
-  }
+  document.getElementById('res-tier-label').textContent = profile.label;
 
   document.getElementById('res-headline').textContent = profile.headline;
 
@@ -509,31 +478,19 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
   ctx.font = '600 18px sans-serif';
   ctx.fillText(`만 ${lastResult.age}세 · ${lastResult.zodiac}띠 · ${lastResult.genderLabel} (총점 ${lastResult.totalScore}점)`, 80, 140);
 
-  // 예상 vs 실제 박스
-  ctx.fillStyle = '#f8f9fb';
-  roundRect(ctx, 80, 180, 240, 150, 20);
-  ctx.fill();
-  ctx.fillStyle = '#5f6673';
-  ctx.font = 'bold 18px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('내 예상', 200, 225);
-  ctx.fillStyle = '#181c23';
-  ctx.font = 'bold 64px sans-serif';
-  ctx.fillText(lastResult.expectedTier, 200, 295);
-
+  // 판정 등급 히어로 박스
   const tierColors = { S: '#7c3aed', A: '#2563eb', B: '#059669', C: '#d97706', D: '#dc2626' };
   ctx.fillStyle = tierColors[lastResult.actualTier];
-  roundRect(ctx, 400, 180, 240, 150, 20);
+  roundRect(ctx, 80, 175, 560, 165, 22);
   ctx.fill();
   ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
   ctx.font = 'bold 18px sans-serif';
-  ctx.fillText('실제 판정', 520, 225);
-  ctx.font = 'bold 64px sans-serif';
-  ctx.fillText(lastResult.actualTier, 520, 295);
-
-  ctx.fillStyle = '#9aa1ae';
-  ctx.font = 'bold 34px sans-serif';
-  ctx.fillText('→', 360, 270);
+  ctx.fillText('결정사 모의 판정 등급', 360, 215);
+  ctx.font = 'bold 72px sans-serif';
+  ctx.fillText(lastResult.actualTier, 360, 288);
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillText(TIER_PROFILES[lastResult.actualTier].label, 360, 322);
 
   // 코멘트
   ctx.textAlign = 'left';
@@ -603,7 +560,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 // 결과 텍스트 + URL 복사
 document.getElementById('btn-copy-link').addEventListener('click', async () => {
   if (!lastResult) return;
-  const text = `[연애등급측정기]\n내 예상: ${lastResult.expectedTier}등급 → 실제 판정: ${lastResult.actualTier}등급 (${lastResult.totalScore}점)\n${TIER_PROFILES[lastResult.actualTier].headline}\n${window.location.href}`;
+  const text = `[연애등급측정기]\n판정 결과: ${lastResult.actualTier}등급 · ${TIER_PROFILES[lastResult.actualTier].label} (${lastResult.totalScore}점)\n${TIER_PROFILES[lastResult.actualTier].headline}\n${window.location.href}`;
   try {
     await navigator.clipboard.writeText(text);
     showToast('결과가 클립보드에 복사되었습니다!');
@@ -614,7 +571,6 @@ document.getElementById('btn-copy-link').addEventListener('click', async () => {
 
 // 다시 하기
 document.getElementById('btn-retry').addEventListener('click', () => {
-  state.expectedTier = null;
   state.currentStep = 0;
   state.answers = {
     gender: null,
@@ -629,8 +585,5 @@ document.getElementById('btn-retry').addEventListener('click', () => {
     communication: null,
     standard: null
   };
-  expectedSelector.querySelectorAll('.tier-chip').forEach((c) => c.classList.remove('selected'));
-  btnStart.disabled = true;
-  btnStart.textContent = '예상 등급을 선택하면 시작합니다';
   showScreen('intro');
 });
