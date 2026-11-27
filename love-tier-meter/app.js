@@ -2190,45 +2190,151 @@ function evaluateResult() {
   const regionText = getRegionDisplay(a);
   const workRegionText = empOpt.zeroSalaryDefault ? '해당 없음' : getWorkRegionDisplay(a);
 
+  const bmiCat = getBmiCategory(bmi);
+  const bmiTone = bmiCat === '정상' ? 'good' : bmiCat === '과체중' || bmiCat === '저체중' ? 'warn' : 'bad';
+  const cashVal = Number(a.cashManwon) || 0;
+  const isaVal = Number(a.isaManwon) || 0;
+  const pensionVal = Number(a.pensionManwon) || 0;
+  const investVal = Number(a.investManwon) || 0;
+  const debtVal = Number(a.debtManwon) || 0;
+
   const summarySections = [
     {
       title: '01. 인적 사항',
-      items: [
-        { key: '성명', val: `${displayName}${a.isNamePrivate ? ' (비공개)' : ''}` },
-        { key: '성별 · 나이', val: `${a.gender === 'male' ? '남성' : '여성'} · 만 ${manAge}세 (연 ${yearAge}세, ${zodiac.emoji} ${zodiac.name})` },
-        { key: '혈액형 · MBTI', val: `${a.bloodType || '-'} · ${mbtiStr}` },
-        { key: '거주지', val: regionText }
+      rows: [
+        {
+          cols: 3,
+          cells: [
+            { key: '성명', val: `${displayName}${a.isNamePrivate ? ' (비공개)' : ''}` },
+            { key: '성별 · 나이', val: `${a.gender === 'male' ? '남성' : '여성'} · 만 ${manAge}세 (${zodiac.emoji} ${zodiac.name})` },
+            { key: '혈액형 · MBTI', val: `${a.bloodType || '-'} · ${mbtiStr}` }
+          ]
+        },
+        {
+          cols: 2,
+          cells: [
+            { key: '현재 거주지', val: regionText },
+            { key: '직장 위치', val: workRegionText }
+          ]
+        }
       ]
     },
     {
-      title: '02. 학력 · 직장 · 소득',
-      items: [
-        { key: '최종 학력', val: tierOpt ? `${degOpt.label} (${tierOpt.label.split(' ')[0]})` : degOpt.label },
-        { key: '고용 형태', val: empOpt.label },
-        { key: '직장 위치', val: workRegionText },
-        { key: '연 소득 (세전 / 월 실수령)', val: `${formatManwonKorean(grossSalary)} / 월 ${formatManwonKorean(monthlyNet)}` }
+      title: '02. 신체 조건',
+      rows: [
+        {
+          cols: 3,
+          cells: [
+            { key: '신장', val: `${h} cm` },
+            { key: '체중', val: `${w} kg` },
+            { key: 'BMI 지수', val: `${bmi.toFixed(1)}`, badge: bmiCat, badgeTone: bmiTone }
+          ]
+        }
       ]
     },
     {
-      title: '03. 자산 · 주거',
-      items: [
-        { key: '부동산 · 주거비', val: `${houseOpt.label} (월 ${houseCost}만원)` },
-        { key: '순 금융자산', val: formatManwonKorean(netFinancial) },
-        { key: '자차 소유', val: hasCar ? carOpt.label : '없음', checkbox: true, checked: hasCar }
+      title: '03. 학력 · 직업 · 소득',
+      rows: [
+        {
+          cols: 2,
+          cells: [
+            { key: '최종 학력', val: tierOpt ? `${degOpt.label} (${tierOpt.label.split(' ')[0]})` : degOpt.label },
+            { key: '고용 형태', val: empOpt.label }
+          ]
+        },
+        {
+          cols: 3,
+          cells: [
+            { key: '세전 총소득 (연)', val: formatManwonKorean(grossSalary) },
+            { key: '예상 세후 (연)', val: formatManwonKorean(netSalary) },
+            { key: '예상 월 실수령', val: formatManwonKorean(monthlyNet), highlight: true }
+          ]
+        }
       ]
     },
     {
-      title: '04. 신체 · 자기관리 · 연애',
-      items: [
-        { key: '신체 · BMI', val: `${h}cm · ${w}kg (BMI ${bmi.toFixed(1)} · ${getBmiCategory(bmi)})` },
-        { key: '운동 습관', val: isNoExercise ? freqOpt.label : `${freqOpt.label} · ${durOpt.label} (${yrsOpt.label})` },
-        { key: '흡연 · 음주', val: `${smkOpt.label} · ${drkOpt.label}` },
-        { key: '식단 · 종교', val: `${dietOpt.label.split(' ')[0]} · ${relOpt.label.split(' ')[0]}` },
-        { key: '연애 이력', val: isNoDating ? dcOpt.label : `${dcOpt.label} (최장 ${dlOpt.label})` }
+      title: '04. 자산 · 주거 · 차량',
+      rows: [
+        {
+          cols: 2,
+          cells: [
+            { key: '주거 형태 · 월 주거비', val: `${houseOpt.label} (월 ${houseCost}만원)` },
+            {
+              key: '자차 소유',
+              val: hasCar ? carOpt.label : '',
+              checks: [
+                { label: '보유', checked: hasCar },
+                { label: '미보유', checked: !hasCar }
+              ]
+            }
+          ]
+        },
+        {
+          cols: 3,
+          cells: [
+            { key: '현금 · 예적금', val: formatManwonKorean(cashVal) },
+            { key: 'ISA · 청약', val: formatManwonKorean(isaVal) },
+            { key: '연금 저축', val: formatManwonKorean(pensionVal) }
+          ]
+        },
+        {
+          cols: 3,
+          cells: [
+            { key: '주식 · 코인', val: formatManwonKorean(investVal) },
+            { key: '대출 (부동산 외)', val: debtVal > 0 ? `-${formatManwonKorean(debtVal)}` : '0원' },
+            { key: '순 금융자산 합계', val: formatManwonKorean(netFinancial), highlight: true }
+          ]
+        }
+      ]
+    },
+    {
+      title: '05. 자기관리 · 생활 습관',
+      rows: [
+        {
+          cols: 3,
+          cells: [
+            { key: '주 운동 횟수', val: freqOpt.label },
+            { key: '1회 운동 시간', val: isNoExercise ? '해당 없음' : durOpt.label },
+            { key: '운동 경력', val: isNoExercise ? '해당 없음' : yrsOpt.label }
+          ]
+        },
+        {
+          cols: 1,
+          cells: [
+            {
+              key: '흡연 여부',
+              checks: [
+                { label: '비흡연', checked: a.smoking === 0 },
+                { label: '연초 흡연', checked: a.smoking === 1 },
+                { label: '전자담배', checked: a.smoking === 2 }
+              ]
+            }
+          ]
+        },
+        {
+          cols: 3,
+          cells: [
+            { key: '음주 빈도', val: drkOpt.label },
+            { key: '식습관', val: dietOpt.label.split(' ')[0] },
+            { key: '종교', val: relOpt.label.split(' ')[0] }
+          ]
+        }
+      ]
+    },
+    {
+      title: '06. 연애 이력',
+      rows: [
+        {
+          cols: 2,
+          cells: [
+            { key: '연애 횟수', val: dcOpt.label },
+            { key: '최장 연애 기간', val: isNoDating ? '해당 없음' : dlOpt.label }
+          ]
+        }
       ]
     }
   ];
-  const summaryItems = summarySections.flatMap((sec) => sec.items);
+  const summaryItems = summarySections.flatMap((sec) => sec.rows.flatMap((r) => r.cells));
 
   const metrics = [
     { label: '스펙 (피지컬·학력·직업·소득·연령)', score: specPercent },
@@ -2300,30 +2406,43 @@ function renderResult(res) {
     )
     .join('');
 
-  const sections =
-    res.summarySections ||
-    [{ title: '입력 정보', items: res.summaryItems || [] }];
+  const sections = res.summarySections || [];
   const summarySheetEl = document.getElementById('res-summary-sheet');
   summarySheetEl.innerHTML = sections
     .map(
       (sec) => `
       <div class="resume-section">
         <div class="resume-section-title">${sec.title}</div>
-        <div class="resume-table">
-          ${sec.items
-            .map((item) => {
-              const valHtml = item.checkbox
-                ? `<span class="resume-check ${item.checked ? 'checked' : ''}">${item.checked ? '✓' : ''}</span><span>${item.val}</span>`
-                : item.val;
-              return `
-              <div class="summary-item">
-                <span class="summary-key">${item.key}</span>
-                <span class="summary-val">${valHtml}</span>
-              </div>
-            `;
-            })
-            .join('')}
-        </div>
+        ${(sec.rows || [])
+          .map(
+            (row) => `
+          <div class="resume-row cols-${row.cols}">
+            ${row.cells
+              .map((cell) => {
+                const checksHtml = cell.checks
+                  ? `<span class="resume-check-group">${cell.checks
+                      .map(
+                        (c) =>
+                          `<span class="resume-check-opt ${c.checked ? 'is-checked' : ''}"><span class="resume-check ${c.checked ? 'checked' : ''}">${c.checked ? '✓' : ''}</span><span>${c.label}</span></span>`
+                      )
+                      .join('')}</span>`
+                  : '';
+                const badgeHtml = cell.badge
+                  ? `<span class="resume-badge tone-${cell.badgeTone || 'good'}">${cell.badge}</span>`
+                  : '';
+                const valTextHtml = cell.val ? `<span>${cell.val}</span>` : '';
+                return `
+                <div class="resume-cell ${cell.highlight ? 'highlight' : ''}">
+                  <span class="resume-cell-key">${cell.key}</span>
+                  <span class="resume-cell-val">${checksHtml}${valTextHtml}${badgeHtml}</span>
+                </div>
+              `;
+              })
+              .join('')}
+          </div>
+        `
+          )
+          .join('')}
       </div>
     `
     )
@@ -2386,12 +2505,10 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
   );
   const metricsTop = 180 + verdictHeight + 36;
   const metricsHeight = lastResult.metrics.length * 56;
-  const resumeSections =
-    lastResult.summarySections ||
-    [{ title: '입력 정보', items: lastResult.summaryItems || [] }];
+  const resumeSections = lastResult.summarySections || [];
   const summaryTop = metricsTop + metricsHeight + 38;
-  const totalSectionItems = resumeSections.reduce((sum, s) => sum + s.items.length, 0);
-  const summaryHeight = 28 + resumeSections.length * 46 + totalSectionItems * 36;
+  const totalSectionRows = resumeSections.reduce((sum, s) => sum + (s.rows ? s.rows.length : 0), 0);
+  const summaryHeight = 28 + resumeSections.length * 46 + totalSectionRows * 54;
   ctx.font = '600 12px monospace';
   const codeLines = getWrappedLines(ctx, `CODE: ${lastResult.restoreCode || '-'}`, 692);
   const hashTop = summaryTop + summaryHeight + 24;
@@ -2500,14 +2617,14 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
     my += 54;
   });
 
-  // 입력 정보 종합 프로필 (1열 섹션형 이력서 양식)
+  // 입력 정보 종합 프로필 (다중 열 · 체크박스 · 배지형 이력서)
   ctx.fillStyle = '#181c23';
   ctx.font = 'bold 16px sans-serif';
   ctx.fillText('입력 정보 종합 프로필', 64, summaryTop);
 
   let ry = summaryTop + 18;
   const tableW = 692;
-  const keyColW = 190;
+  const rowH = 54;
   resumeSections.forEach((sec) => {
     ctx.strokeStyle = '#1c2434';
     ctx.lineWidth = 2;
@@ -2524,50 +2641,67 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
     ctx.fillText(sec.title, 76, ry + 20);
     ry += 31;
 
-    sec.items.forEach((item) => {
-      ctx.fillStyle = '#f8f9fb';
-      ctx.fillRect(64, ry, keyColW, 36);
-
-      ctx.strokeStyle = '#e3e6ec';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(64 + keyColW, ry);
-      ctx.lineTo(64 + keyColW, ry + 36);
-      ctx.moveTo(64, ry + 36);
-      ctx.lineTo(64 + tableW, ry + 36);
-      ctx.stroke();
-
-      ctx.fillStyle = '#5f6673';
-      ctx.font = '700 13px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(item.key, 76, ry + 22);
-
-      const valX = 64 + keyColW + 14;
-      ctx.fillStyle = '#181c23';
-      ctx.font = '600 13px sans-serif';
-      if (item.checkbox) {
-        ctx.strokeStyle = item.checked ? '#1c2434' : '#9aa1ae';
-        ctx.lineWidth = 1.5;
-        roundRect(ctx, valX, ry + 10, 15, 15, 3);
-        if (item.checked) {
-          ctx.fillStyle = '#1c2434';
-          ctx.fill();
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 11px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('✓', valX + 7.5, ry + 22);
-          ctx.fillStyle = '#181c23';
-          ctx.font = '600 13px sans-serif';
-          ctx.textAlign = 'left';
-        } else {
-          ctx.stroke();
+    (sec.rows || []).forEach((row) => {
+      const colW = tableW / row.cols;
+      row.cells.forEach((cell, cIdx) => {
+        const cx = 64 + cIdx * colW;
+        if (cell.highlight) {
+          ctx.fillStyle = '#f5f7fc';
+          ctx.fillRect(cx, ry, colW, rowH);
         }
-        ctx.fillText(item.val, valX + 23, ry + 22);
-      } else {
-        ctx.fillText(item.val, valX, ry + 22);
-      }
+        ctx.strokeStyle = '#e3e6ec';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx, ry, colW, rowH);
 
-      ry += 36;
+        ctx.fillStyle = '#5f6673';
+        ctx.font = '700 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(cell.key, cx + 12, ry + 19);
+
+        let curX = cx + 12;
+        const valY = ry + 40;
+        if (cell.checks) {
+          cell.checks.forEach((chk) => {
+            ctx.strokeStyle = chk.checked ? '#1c2434' : '#9aa1ae';
+            ctx.lineWidth = 1.5;
+            roundRect(ctx, curX, valY - 11, 13, 13, 3);
+            if (chk.checked) {
+              ctx.fillStyle = '#1c2434';
+              ctx.fill();
+              ctx.fillStyle = '#ffffff';
+              ctx.font = 'bold 10px sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText('✓', curX + 6.5, valY - 1);
+            } else {
+              ctx.stroke();
+            }
+            ctx.textAlign = 'left';
+            ctx.fillStyle = chk.checked ? '#181c23' : '#6c7382';
+            ctx.font = chk.checked ? '700 12.5px sans-serif' : '500 12.5px sans-serif';
+            ctx.fillText(chk.label, curX + 18, valY);
+            curX += 18 + ctx.measureText(chk.label).width + 12;
+          });
+        }
+        if (cell.val) {
+          ctx.fillStyle = '#181c23';
+          ctx.font = '700 13px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(cell.val, curX, valY);
+          curX += ctx.measureText(cell.val).width + 8;
+        }
+        if (cell.badge) {
+          const badgeBg = cell.badgeTone === 'good' ? '#e8f7ef' : cell.badgeTone === 'warn' ? '#fef3c7' : '#fee2e2';
+          const badgeFg = cell.badgeTone === 'good' ? '#059669' : cell.badgeTone === 'warn' ? '#b45309' : '#dc2626';
+          ctx.font = 'bold 11px sans-serif';
+          const bw = ctx.measureText(cell.badge).width + 14;
+          ctx.fillStyle = badgeBg;
+          roundRect(ctx, curX, valY - 13, bw, 18, 9);
+          ctx.fill();
+          ctx.fillStyle = badgeFg;
+          ctx.fillText(cell.badge, curX + 7, valY);
+        }
+      });
+      ry += rowH;
     });
 
     ry += 14;
