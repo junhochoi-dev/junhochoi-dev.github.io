@@ -1194,42 +1194,30 @@ body {
   color: var(--text-sub);
 }
 
-.btn-hash-copy {
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--primary);
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 3px 9px;
-  cursor: pointer;
-}
-
-.btn-hash-copy:hover {
-  border-color: var(--primary);
-}
-
 .hash-btn-group {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.btn-kakao-share {
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  color: #191919;
-  background: #fee500;
-  border: 1px solid #ecd400;
-  border-radius: 6px;
-  padding: 3px 9px;
+.btn-icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  color: var(--primary);
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 7px;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.btn-kakao-share:hover {
-  background: #f5dc00;
+.btn-icon-action:hover {
+  border-color: var(--primary);
+  background: #f4f6fb;
 }
 
 .result-hash-code {

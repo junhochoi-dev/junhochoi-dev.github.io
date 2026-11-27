@@ -2593,7 +2593,7 @@ document.getElementById('btn-share-kakao').addEventListener('click', async () =>
   }
   try {
     await navigator.clipboard.writeText(shareText);
-    showToast('카카오톡에 붙여넣을 수 있게 결과코드가 복사되었습니다!');
+    showToast('공유할 수 있도록 결과코드가 복사되었습니다!');
   } catch {
     showToast('공유에 실패했습니다. 복사 버튼을 이용해 주세요.');
   }
