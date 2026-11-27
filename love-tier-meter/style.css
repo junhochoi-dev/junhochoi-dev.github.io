@@ -1145,6 +1145,29 @@ body {
   color: #ffffff;
 }
 
+.btn-restore-toggle {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.restore-panel {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--surface-muted);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.restore-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.restore-actions {
+  margin-top: 8px;
+}
+
 .result-hash-section {
   margin-top: 16px;
   padding: 12px 14px;

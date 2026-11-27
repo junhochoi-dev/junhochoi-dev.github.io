@@ -1840,6 +1840,232 @@ function computeResultHash(payload) {
     .join('');
 }
 
+const TOKEN_PREFIX = 'LTM1.';
+const TOKEN_KEY = 'LoveTierMeter#2026!EnumCipherKey';
+const BLOOD_ENUM = ['A', 'B', 'O', 'AB'];
+const MBTI_ENUM = [
+  ['E', 'I'],
+  ['S', 'N'],
+  ['T', 'F'],
+  ['J', 'P']
+];
+
+function toBase64Url(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 1) {
+    bin += String.fromCharCode(bytes[i]);
+  }
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function fromBase64Url(str) {
+  const padLen = (4 - (str.length % 4)) % 4;
+  const b64 = str.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padLen);
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) {
+    bytes[i] = bin.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function xorObfuscateBytes(bytes) {
+  const out = new Uint8Array(bytes.length);
+  let stateMix = 0x5a;
+  for (let i = 0; i < bytes.length; i += 1) {
+    const k = TOKEN_KEY.charCodeAt(i % TOKEN_KEY.length);
+    stateMix = (stateMix * 33 + k + i) & 0xff;
+    out[i] = bytes[i] ^ stateMix;
+  }
+  return out;
+}
+
+function encodeRegionPair(sido, gungu) {
+  const sidoList = Object.keys(KOREA_REGIONS);
+  const sIdx = Math.max(0, sidoList.indexOf(sido));
+  const sKey = sidoList[sIdx];
+  const gunguList = Object.keys(KOREA_REGIONS[sKey].districts);
+  const gIdx = Math.max(0, gunguList.indexOf(gungu));
+  return [sIdx, gIdx];
+}
+
+function decodeRegionPair(sIdx, gIdx) {
+  const sidoList = Object.keys(KOREA_REGIONS);
+  const sKey = sidoList[sIdx] || sidoList[0];
+  const gunguList = Object.keys(KOREA_REGIONS[sKey].districts);
+  const gKey = gunguList[gIdx] || gunguList[0];
+  return [sKey, gKey];
+}
+
+function encodeMbtiMask(mbti) {
+  const keys = ['ei', 'sn', 'tf', 'jp'];
+  let mask = 0;
+  keys.forEach((k, idx) => {
+    const v = mbti && mbti[k];
+    const code = v === MBTI_ENUM[idx][0] ? 1 : v === MBTI_ENUM[idx][1] ? 2 : 0;
+    mask = mask * 3 + code;
+  });
+  return mask;
+}
+
+function decodeMbtiMask(mask) {
+  const keys = ['ei', 'sn', 'tf', 'jp'];
+  const out = { ei: null, sn: null, tf: null, jp: null };
+  let cur = Math.max(0, Math.min(80, Number(mask) || 0));
+  for (let idx = keys.length - 1; idx >= 0; idx -= 1) {
+    const rem = cur % 3;
+    cur = Math.floor(cur / 3);
+    out[keys[idx]] = rem === 1 ? MBTI_ENUM[idx][0] : rem === 2 ? MBTI_ENUM[idx][1] : null;
+  }
+  return out;
+}
+
+function numOrEmpty(val) {
+  return val === '' || val === null || val === undefined ? -1 : Number(val);
+}
+
+function strFromNum(n) {
+  return n === -1 || Number.isNaN(n) ? '' : String(n);
+}
+
+function idxOrNeg(val) {
+  return val === null || val === undefined ? -1 : Number(val);
+}
+
+function idxOrNull(n) {
+  return n < 0 || Number.isNaN(n) ? null : n;
+}
+
+function encodeResultCode(a) {
+  const [rS, rG] = encodeRegionPair(a.regionSido, a.regionGungu);
+  const [wS, wG] = encodeRegionPair(a.workSido, a.workGungu);
+  const nickIdx = Math.max(0, RANDOM_NICKNAMES.indexOf(a.randomNickname));
+  const fields = [
+    encodeURIComponent(a.isNamePrivate ? '' : a.userName || ''),
+    a.isNamePrivate ? 1 : 0,
+    nickIdx,
+    a.gender === 'male' ? 0 : a.gender === 'female' ? 1 : -1,
+    numOrEmpty(a.birthYear),
+    numOrEmpty(a.birthMonth),
+    numOrEmpty(a.birthDay),
+    a.birthAmPm === 'PM' ? 1 : 0,
+    numOrEmpty(a.birthHour),
+    numOrEmpty(a.birthMinute),
+    a.unknownTime ? 1 : 0,
+    BLOOD_ENUM.indexOf(a.bloodType),
+    encodeMbtiMask(a.mbti),
+    rS,
+    rG,
+    wS,
+    wG,
+    numOrEmpty(a.heightCm),
+    numOrEmpty(a.weightKg),
+    idxOrNeg(a.educationDegree),
+    idxOrNeg(a.educationTier),
+    idxOrNeg(a.employmentType),
+    numOrEmpty(a.salaryManwon),
+    numOrEmpty(a.incentiveManwon),
+    idxOrNeg(a.housingType),
+    numOrEmpty(a.housingCostManwon),
+    numOrEmpty(a.cashManwon),
+    numOrEmpty(a.isaManwon),
+    numOrEmpty(a.pensionManwon),
+    numOrEmpty(a.investManwon),
+    numOrEmpty(a.debtManwon),
+    idxOrNeg(a.car),
+    idxOrNeg(a.exerciseFreq),
+    idxOrNeg(a.exerciseDuration),
+    idxOrNeg(a.exerciseYears),
+    idxOrNeg(a.smoking),
+    idxOrNeg(a.drinking),
+    idxOrNeg(a.diet),
+    idxOrNeg(a.religion),
+    idxOrNeg(a.datingCount),
+    idxOrNeg(a.datingLongest),
+    idxOrNeg(a.standard)
+  ];
+
+  const payloadBytes = new TextEncoder().encode(fields.join('|'));
+  let checksum = 0x3c;
+  for (let i = 0; i < payloadBytes.length; i += 1) {
+    checksum = (checksum ^ payloadBytes[i]) & 0xff;
+  }
+  const framed = new Uint8Array(payloadBytes.length + 1);
+  framed[0] = checksum;
+  framed.set(payloadBytes, 1);
+  return TOKEN_PREFIX + toBase64Url(xorObfuscateBytes(framed));
+}
+
+function decodeResultCode(rawCode) {
+  try {
+    const trimmed = String(rawCode || '').trim();
+    if (!trimmed.startsWith(TOKEN_PREFIX)) return null;
+    const framed = xorObfuscateBytes(fromBase64Url(trimmed.slice(TOKEN_PREFIX.length)));
+    if (framed.length < 2) return null;
+    const expectedSum = framed[0];
+    const payloadBytes = framed.slice(1);
+    let actualSum = 0x3c;
+    for (let i = 0; i < payloadBytes.length; i += 1) {
+      actualSum = (actualSum ^ payloadBytes[i]) & 0xff;
+    }
+    if (actualSum !== expectedSum) return null;
+
+    const parts = new TextDecoder().decode(payloadBytes).split('|');
+    if (parts.length !== 42) return null;
+
+    const n = (idx) => Number(parts[idx]);
+    const [regionSido, regionGungu] = decodeRegionPair(n(13), n(14));
+    const [workSido, workGungu] = decodeRegionPair(n(15), n(16));
+
+    return {
+      userName: decodeURIComponent(parts[0] || ''),
+      isNamePrivate: n(1) === 1,
+      randomNickname: RANDOM_NICKNAMES[n(2)] || RANDOM_NICKNAMES[0],
+      gender: n(3) === 0 ? 'male' : n(3) === 1 ? 'female' : null,
+      birthYear: strFromNum(n(4)),
+      birthMonth: strFromNum(n(5)),
+      birthDay: strFromNum(n(6)),
+      birthAmPm: n(7) === 1 ? 'PM' : 'AM',
+      birthHour: strFromNum(n(8)),
+      birthMinute: strFromNum(n(9)),
+      unknownTime: n(10) === 1,
+      bloodType: BLOOD_ENUM[n(11)] || null,
+      mbti: decodeMbtiMask(n(12)),
+      regionSido,
+      regionGungu,
+      workSido,
+      workGungu,
+      heightCm: strFromNum(n(17)),
+      weightKg: strFromNum(n(18)),
+      educationDegree: idxOrNull(n(19)),
+      educationTier: idxOrNull(n(20)),
+      employmentType: idxOrNull(n(21)),
+      salaryManwon: strFromNum(n(22)),
+      incentiveManwon: strFromNum(n(23)),
+      housingType: idxOrNull(n(24)),
+      housingCostManwon: strFromNum(n(25)),
+      cashManwon: strFromNum(n(26)),
+      isaManwon: strFromNum(n(27)),
+      pensionManwon: strFromNum(n(28)),
+      investManwon: strFromNum(n(29)),
+      debtManwon: strFromNum(n(30)),
+      car: idxOrNull(n(31)),
+      exerciseFreq: idxOrNull(n(32)),
+      exerciseDuration: idxOrNull(n(33)),
+      exerciseYears: idxOrNull(n(34)),
+      smoking: idxOrNull(n(35)),
+      drinking: idxOrNull(n(36)),
+      diet: idxOrNull(n(37)),
+      religion: idxOrNull(n(38)),
+      datingCount: idxOrNull(n(39)),
+      datingLongest: idxOrNull(n(40)),
+      standard: idxOrNull(n(41))
+    };
+  } catch {
+    return null;
+  }
+}
+
 function evaluateResult() {
   const a = state.answers;
   const displayName = getDisplayName();
@@ -2011,6 +2237,7 @@ function evaluateResult() {
     actualTier: tierObj.tier,
     metrics
   });
+  const restoreCode = encodeResultCode(a);
 
   return {
     displayName,
@@ -2026,7 +2253,8 @@ function evaluateResult() {
     eyePenalty,
     summaryItems,
     metrics,
-    resultHash
+    resultHash,
+    restoreCode
   };
 }
 
@@ -2091,6 +2319,12 @@ function renderResult(res) {
     const hash = res.resultHash || computeResultHash({ totalScore: res.totalScore, actualTier: res.actualTier, metrics: res.metrics, summaryItems: res.summaryItems });
     res.resultHash = hash;
     hashEl.textContent = hash;
+  }
+  const restoreEl = document.getElementById('res-restore-code');
+  if (restoreEl) {
+    const code = res.restoreCode || encodeResultCode(state.answers);
+    res.restoreCode = code;
+    restoreEl.textContent = code;
   }
   saveAppState();
 }
@@ -2356,7 +2590,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   ctx.fillText(line, x, y);
 }
 
-// 결과 해시 복사
+// 결과 해시 및 복원 코드 복사
 document.getElementById('btn-copy-hash').addEventListener('click', async () => {
   if (!lastResult || !lastResult.resultHash) return;
   try {
@@ -2366,6 +2600,48 @@ document.getElementById('btn-copy-hash').addEventListener('click', async () => {
     showToast('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
   }
 });
+
+document.getElementById('btn-copy-restore').addEventListener('click', async () => {
+  if (!lastResult || !lastResult.restoreCode) return;
+  try {
+    await navigator.clipboard.writeText(lastResult.restoreCode);
+    showToast('양방향 복원 코드가 복사되었습니다!');
+  } catch {
+    showToast('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
+  }
+});
+
+// 인트로 화면 복원 코드 불러오기
+const btnToggleRestore = document.getElementById('btn-toggle-restore');
+const restorePanel = document.getElementById('restore-code-panel');
+const inputRestoreCode = document.getElementById('input-restore-code');
+const btnApplyRestore = document.getElementById('btn-apply-restore');
+const restoreError = document.getElementById('restore-error');
+
+if (btnToggleRestore && restorePanel) {
+  btnToggleRestore.addEventListener('click', () => {
+    const isHidden = restorePanel.style.display === 'none';
+    restorePanel.style.display = isHidden ? 'block' : 'none';
+    if (isHidden && inputRestoreCode) inputRestoreCode.focus();
+  });
+}
+
+if (btnApplyRestore && inputRestoreCode) {
+  btnApplyRestore.addEventListener('click', () => {
+    const decoded = decodeResultCode(inputRestoreCode.value);
+    if (!decoded) {
+      restoreError.textContent = '유효하지 않은 복원 코드입니다. (LTM1.으로 시작하는 전체 코드를 확인해 주세요)';
+      return;
+    }
+    restoreError.textContent = '';
+    state.answers = decoded;
+    state.currentStep = QUESTIONS.length - 1;
+    const result = evaluateResult();
+    renderResult(result);
+    showScreen('result', true);
+    showToast('복원 코드로 결과를 불러왔습니다!');
+  });
+}
 
 // 결과 텍스트 + URL 복사
 document.getElementById('btn-copy-link').addEventListener('click', async () => {
