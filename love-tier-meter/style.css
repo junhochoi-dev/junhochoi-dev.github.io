@@ -1271,10 +1271,54 @@ body {
 
 .result-hash-section {
   margin-top: 16px;
-  padding: 12px 14px;
+  padding: 14px;
   background: var(--surface-muted);
   border: 1px solid var(--border);
   border-radius: 12px;
+}
+
+.result-code-split {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+@media (max-width: 520px) {
+  .result-code-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.result-qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.result-qr-canvas {
+  width: 116px;
+  height: 116px;
+  display: block;
+}
+
+.result-qr-caption {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.result-code-box {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .result-hash-row {

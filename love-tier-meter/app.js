@@ -2368,6 +2368,38 @@ function evaluateResult() {
   };
 }
 
+function getQrPayload(code) {
+  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+    return `${window.location.origin}${window.location.pathname}?code=${encodeURIComponent(code)}`;
+  }
+  return code;
+}
+
+function drawQrToCanvas(ctx, text, x, y, size) {
+  if (typeof qrcode !== 'function') return false;
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  const count = qr.getModuleCount();
+  const quiet = 2;
+  const cell = size / (count + quiet * 2);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, y, size, size);
+  ctx.fillStyle = '#1c2434';
+  for (let r = 0; r < count; r += 1) {
+    for (let c = 0; c < count; c += 1) {
+      if (qr.isDark(r, c)) {
+        const px = Math.floor(x + (c + quiet) * cell);
+        const py = Math.floor(y + (r + quiet) * cell);
+        const pw = Math.ceil(cell);
+        ctx.fillRect(px, py, pw, pw);
+      }
+    }
+  }
+  return true;
+}
+
 function renderResult(res) {
   lastResult = res;
   const profile = TIER_PROFILES[res.baseTier];
@@ -2464,10 +2496,15 @@ function renderResult(res) {
     .join('');
 
   const restoreEl = document.getElementById('res-restore-code');
+  const qrCanvas = document.getElementById('res-qr-canvas');
+  const code = res.restoreCode || encodeResultCode(state.answers);
+  res.restoreCode = code;
   if (restoreEl) {
-    const code = res.restoreCode || encodeResultCode(state.answers);
-    res.restoreCode = code;
     restoreEl.textContent = code;
+  }
+  if (qrCanvas) {
+    const qCtx = qrCanvas.getContext('2d');
+    drawQrToCanvas(qCtx, getQrPayload(code), 0, 0, qrCanvas.width);
   }
   saveAppState();
 }
@@ -2525,9 +2562,10 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
   const totalSectionRows = resumeSections.reduce((sum, s) => sum + (s.rows ? s.rows.length : 0), 0);
   const summaryHeight = 28 + resumeSections.length * 46 + totalSectionRows * 54;
   ctx.font = '600 12px monospace';
-  const codeLines = getWrappedLines(ctx, `CODE: ${lastResult.restoreCode || '-'}`, 692);
+  const codeLines = getWrappedLines(ctx, `CODE: ${lastResult.restoreCode || '-'}`, 560);
   const hashTop = summaryTop + summaryHeight + 24;
-  const cardHeight = hashTop + codeLines.length * 18 + 54;
+  const codeBlockH = Math.max(108, codeLines.length * 18 + 20);
+  const cardHeight = hashTop + codeBlockH + 42;
 
   canvas.height = cardHeight + 60;
 
@@ -2755,11 +2793,16 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
     ry += 14;
   });
 
+  const qrDrawn = drawQrToCanvas(ctx, getQrPayload(lastResult.restoreCode || '-'), 64, hashTop - 12, 104);
+  const codeStartX = qrDrawn ? 186 : 64;
   ctx.textAlign = 'left';
+  ctx.fillStyle = '#1c2434';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('결과코드 (QR 스캔 복원 가능)', codeStartX, hashTop + 4);
   ctx.fillStyle = '#5f6673';
   ctx.font = '600 12px monospace';
   codeLines.forEach((ln, idx) => {
-    ctx.fillText(ln, 64, hashTop + idx * 18);
+    ctx.fillText(ln, codeStartX, hashTop + 26 + idx * 18);
   });
 
   ctx.textAlign = 'center';
@@ -2904,6 +2947,21 @@ document.getElementById('btn-retry').addEventListener('click', resetAllData);
 
 function restoreAppState() {
   try {
+    const urlCode = new URLSearchParams(window.location.search).get('code');
+    if (urlCode) {
+      const decodedFromUrl = decodeResultCode(urlCode);
+      if (decodedFromUrl) {
+        state.answers = decodedFromUrl;
+        state.currentStep = QUESTIONS.length - 1;
+        const result = evaluateResult();
+        renderResult(result);
+        showScreen('result', false);
+        history.replaceState({ screen: 'result', step: state.currentStep }, '');
+        showToast('QR 결과코드로 결과를 불러왔습니다!');
+        return;
+      }
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const saved = JSON.parse(raw);
