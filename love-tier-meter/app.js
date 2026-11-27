@@ -2843,7 +2843,65 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   ctx.fillText(line, x, y);
 }
 
-// 결과코드 복사 & 카카오톡 공유
+// 결과코드 복사 & 공유 & QR 모달
+const qrModal = document.getElementById('qr-modal');
+const qrModalCanvas = document.getElementById('qr-modal-canvas');
+const btnOpenQrModal = document.getElementById('btn-open-qr-modal');
+const btnCloseQrModal = document.getElementById('btn-close-qr-modal');
+const qrModalBackdrop = document.getElementById('qr-modal-backdrop');
+const btnSaveQrImg = document.getElementById('btn-save-qr-img');
+
+function openQrModal() {
+  if (!lastResult || !lastResult.restoreCode || !qrModal || !qrModalCanvas) return;
+  const ctx = qrModalCanvas.getContext('2d');
+  drawQrToCanvas(ctx, getQrPayload(lastResult.restoreCode), 0, 0, qrModalCanvas.width);
+  qrModal.classList.add('open');
+  qrModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeQrModal() {
+  if (!qrModal) return;
+  qrModal.classList.remove('open');
+  qrModal.setAttribute('aria-hidden', 'true');
+}
+
+if (btnOpenQrModal) btnOpenQrModal.addEventListener('click', openQrModal);
+if (btnCloseQrModal) btnCloseQrModal.addEventListener('click', closeQrModal);
+if (qrModalBackdrop) qrModalBackdrop.addEventListener('click', closeQrModal);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && qrModal && qrModal.classList.contains('open')) {
+    closeQrModal();
+  }
+});
+
+if (btnSaveQrImg) {
+  btnSaveQrImg.addEventListener('click', () => {
+    if (!lastResult || !lastResult.restoreCode) return;
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = 440;
+    outCanvas.height = 490;
+    const oCtx = outCanvas.getContext('2d');
+    oCtx.fillStyle = '#ffffff';
+    oCtx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+
+    drawQrToCanvas(oCtx, getQrPayload(lastResult.restoreCode), 40, 32, 360);
+
+    oCtx.textAlign = 'center';
+    oCtx.fillStyle = '#1c2434';
+    oCtx.font = 'bold 16px sans-serif';
+    oCtx.fillText(`연애등급측정기 · ${lastResult.displayName} (${lastResult.actualTier}등급)`, 220, 424);
+    oCtx.fillStyle = '#5f6673';
+    oCtx.font = '500 13px sans-serif';
+    oCtx.fillText('QR 스캔으로 결과 화면 바로 복원', 220, 450);
+
+    const link = document.createElement('a');
+    link.download = `연애등급측정기_QR_${lastResult.actualTier}등급.png`;
+    link.href = outCanvas.toDataURL('image/png');
+    link.click();
+    showToast('QR 코드 이미지를 저장했습니다!');
+  });
+}
+
 document.getElementById('btn-copy-restore').addEventListener('click', async () => {
   if (!lastResult || !lastResult.restoreCode) return;
   try {

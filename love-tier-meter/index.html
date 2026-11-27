@@ -114,10 +114,10 @@
 
         <div class="result-hash-section">
           <div class="result-code-split">
-            <div class="result-qr-box">
+            <button type="button" id="btn-open-qr-modal" class="result-qr-box" aria-label="QR코드 크게 보기" title="클릭하여 QR 크게 보기">
               <canvas id="res-qr-canvas" class="result-qr-canvas" width="128" height="128" aria-label="결과코드 QR"></canvas>
-              <span class="result-qr-caption">QR 스캔 복원</span>
-            </div>
+              <span class="result-qr-caption">클릭해 크게 보기</span>
+            </button>
             <div class="result-code-box">
               <div class="result-hash-row">
                 <span class="result-hash-label">결과코드</span>
@@ -158,6 +158,23 @@
     <footer class="footer">
       <p>재미로 보는 토이 프로젝트 · 실제 결혼정보회사 기준과 다를 수 있습니다.</p>
     </footer>
+  </div>
+
+  <div id="qr-modal" class="qr-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
+    <div id="qr-modal-backdrop" class="qr-modal-backdrop"></div>
+    <div class="qr-modal-dialog">
+      <div class="qr-modal-head">
+        <h3 id="qr-modal-title" class="qr-modal-title">결과코드 QR</h3>
+        <button type="button" id="btn-close-qr-modal" class="qr-modal-close" aria-label="닫기">✕</button>
+      </div>
+      <div class="qr-modal-body">
+        <canvas id="qr-modal-canvas" class="qr-modal-canvas" width="320" height="320"></canvas>
+        <p class="qr-modal-desc">스마트폰 카메라로 스캔하면 결과 화면이 바로 복원됩니다.</p>
+      </div>
+      <div class="qr-modal-actions">
+        <button type="button" id="btn-save-qr-img" class="btn-primary">QR 이미지 저장</button>
+      </div>
+    </div>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

@@ -1300,6 +1300,14 @@ body {
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: 10px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.12s ease;
+}
+
+.result-qr-box:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
 }
 
 .result-qr-canvas {
@@ -1319,6 +1327,107 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+/* QR 모달 */
+.qr-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.qr-modal.open {
+  display: flex;
+}
+
+.qr-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 26, 38, 0.56);
+  backdrop-filter: blur(2px);
+}
+
+.qr-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 20px 44px rgba(17, 24, 39, 0.22);
+}
+
+.qr-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.qr-modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.qr-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-sub);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-modal-close:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.qr-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.qr-modal-canvas {
+  width: 260px;
+  height: 260px;
+  background: #ffffff;
+  border-radius: 10px;
+  display: block;
+}
+
+.qr-modal-desc {
+  font-size: 12px;
+  color: var(--text-sub);
+  text-align: center;
+  line-height: 1.45;
+}
+
+.qr-modal-actions {
+  margin-top: 14px;
+}
+
+.qr-modal-actions .btn-primary {
+  width: 100%;
 }
 
 .result-hash-row {
