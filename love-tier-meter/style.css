@@ -1160,8 +1160,13 @@ body {
 }
 
 .restore-input {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  word-break: break-all;
 }
 
 .restore-actions {
@@ -1203,6 +1208,28 @@ body {
 
 .btn-hash-copy:hover {
   border-color: var(--primary);
+}
+
+.hash-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-kakao-share {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: #191919;
+  background: #fee500;
+  border: 1px solid #ecd400;
+  border-radius: 6px;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+
+.btn-kakao-share:hover {
+  background: #f5dc00;
 }
 
 .result-hash-code {

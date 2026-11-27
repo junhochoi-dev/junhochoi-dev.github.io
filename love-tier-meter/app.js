@@ -2566,14 +2566,36 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   ctx.fillText(line, x, y);
 }
 
-// 결과 복원 코드 복사
+// 결과코드 복사 & 카카오톡 공유
 document.getElementById('btn-copy-restore').addEventListener('click', async () => {
   if (!lastResult || !lastResult.restoreCode) return;
   try {
     await navigator.clipboard.writeText(lastResult.restoreCode);
-    showToast('양방향 복원 코드가 복사되었습니다!');
+    showToast('결과코드가 복사되었습니다!');
   } catch {
     showToast('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
+  }
+});
+
+document.getElementById('btn-share-kakao').addEventListener('click', async () => {
+  if (!lastResult || !lastResult.restoreCode) return;
+  const shareText = `[연애등급측정기 - ${lastResult.displayName}]\n판정 결과: ${lastResult.actualTier}등급 (${lastResult.totalScore}점)\n\n결과코드:\n${lastResult.restoreCode}\n\n${window.location.href}`;
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: '연애등급측정기 결과코드',
+        text: shareText
+      });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(shareText);
+    showToast('카카오톡에 붙여넣을 수 있게 결과코드가 복사되었습니다!');
+  } catch {
+    showToast('공유에 실패했습니다. 복사 버튼을 이용해 주세요.');
   }
 });
 
@@ -2612,7 +2634,7 @@ if (btnApplyRestore && inputRestoreCode) {
 // 결과 텍스트 + URL 복사
 document.getElementById('btn-copy-link').addEventListener('click', async () => {
   if (!lastResult) return;
-  const text = `[연애등급측정기 - ${lastResult.displayName}]\n판정 결과: ${lastResult.actualTier}등급 · ${TIER_PROFILES[lastResult.baseTier].label} (${lastResult.totalScore}점)\n${TIER_PROFILES[lastResult.baseTier].headline}\n복원 코드: ${lastResult.restoreCode || '-'}\n${window.location.href}`;
+  const text = `[연애등급측정기 - ${lastResult.displayName}]\n판정 결과: ${lastResult.actualTier}등급 · ${TIER_PROFILES[lastResult.baseTier].label} (${lastResult.totalScore}점)\n${TIER_PROFILES[lastResult.baseTier].headline}\n결과코드: ${lastResult.restoreCode || '-'}\n${window.location.href}`;
   try {
     await navigator.clipboard.writeText(text);
     showToast('결과가 클립보드에 복사되었습니다!');
