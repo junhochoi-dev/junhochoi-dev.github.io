@@ -89,7 +89,6 @@ const toastEl = document.getElementById('toast');
 
 let isHandlingPopState = false;
 let lifeTimerInterval = null;
-let regionMapInstance = null;
 
 function clearLifeTimer() {
   if (lifeTimerInterval) {
@@ -98,12 +97,7 @@ function clearLifeTimer() {
   }
 }
 
-function clearRegionMap() {
-  if (regionMapInstance) {
-    regionMapInstance.remove();
-    regionMapInstance = null;
-  }
-}
+function clearRegionMap() {}
 
 function getRegionDisplay(a = state.answers) {
   const sido = a.regionSido || '서울특별시';
@@ -779,7 +773,32 @@ function renderPersonalityStep(q) {
   bindBackButtons();
 }
 
-// 1-3. 현재 거주 지역 (시/도, 시/군/구 + 지도)
+// 1-3. 현재 거주 지역 (시/도, 시/군/구 + 경량 SVG 지도 양방향 연동)
+const SVG_SIDO_TO_REGION = {
+  강원도: '강원특별자치도',
+  전라북도: '전북특별자치도'
+};
+const REGION_SIDO_TO_SVG = {
+  강원특별자치도: '강원도',
+  전북특별자치도: '전라북도'
+};
+
+function isSvgDistrictMatched(svgId, selectedGungu, sido) {
+  if (sido === '세종특별자치시' && selectedGungu === '세종시 전체' && svgId === '세종시') {
+    return true;
+  }
+  return svgId === selectedGungu || svgId.startsWith(`${selectedGungu} `);
+}
+
+function resolveGunguFromSvgId(svgId, sido) {
+  const districts = (KOREA_REGIONS[sido] && KOREA_REGIONS[sido].districts) || {};
+  if (sido === '세종특별자치시' && svgId === '세종시') return '세종시 전체';
+  if (districts[svgId]) return svgId;
+  const base = svgId.split(' ')[0];
+  if (districts[base]) return base;
+  return null;
+}
+
 function renderRegionStep(q) {
   const sidoList = Object.keys(KOREA_REGIONS);
   if (!KOREA_REGIONS[state.answers.regionSido]) {
@@ -792,7 +811,7 @@ function renderRegionStep(q) {
   }
 
   const { regionSido, regionGungu } = state.answers;
-  const coords = sidoObj.districts[regionGungu] || sidoObj.center;
+  const nationalSvg = typeof KOREA_SVG_MAPS !== 'undefined' ? KOREA_SVG_MAPS['전국'] : null;
 
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
@@ -818,9 +837,26 @@ function renderRegionStep(q) {
       <div class="region-map-wrap">
         <div class="region-map-bar">
           <span id="region-map-label">📍 ${regionSido} ${regionGungu}</span>
-          <span id="region-map-coords" class="region-map-coords">${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}</span>
+          <span id="region-map-coords" class="region-map-coords">SVG 지도 클릭으로도 선택 가능</span>
         </div>
-        <div id="region-map" class="region-map-canvas"></div>
+        <div class="region-svg-grid">
+          <div class="region-svg-panel">
+            <div class="region-svg-panel-head">
+              <span>대한민국 시 · 도</span>
+              <span id="region-sido-hover" class="region-svg-hover">${regionSido}</span>
+            </div>
+            <svg id="region-national-svg" class="region-svg-box" viewBox="${nationalSvg ? nationalSvg.viewBox : '0 0 800 759'}" stroke-linecap="round" stroke-linejoin="round">
+              ${nationalSvg ? nationalSvg.paths.map((p) => `<path class="region-svg-path" data-svg-sido="${p.id}" d="${p.d}" />`).join('') : ''}
+            </svg>
+          </div>
+          <div class="region-svg-panel">
+            <div class="region-svg-panel-head">
+              <span id="region-detail-title">${regionSido} 시 · 군 · 구</span>
+              <span id="region-gungu-hover" class="region-svg-hover">${regionGungu}</span>
+            </div>
+            <div id="region-detail-container"></div>
+          </div>
+        </div>
       </div>
 
       <div class="quiz-nav-row">
@@ -834,37 +870,96 @@ function renderRegionStep(q) {
   const gunguEl = document.getElementById('select-gungu');
   const labelEl = document.getElementById('region-map-label');
   const coordsEl = document.getElementById('region-map-coords');
+  const nationalSvgEl = document.getElementById('region-national-svg');
+  const detailContainerEl = document.getElementById('region-detail-container');
+  const detailTitleEl = document.getElementById('region-detail-title');
+  const sidoHoverEl = document.getElementById('region-sido-hover');
+  const gunguHoverEl = document.getElementById('region-gungu-hover');
 
-  let marker = null;
-  if (typeof L !== 'undefined') {
-    const initialZoom = regionSido === '해외' ? 4 : 12;
-    regionMapInstance = L.map('region-map').setView(coords, initialZoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
-      maxZoom: 18
-    }).addTo(regionMapInstance);
-    marker = L.marker(coords).addTo(regionMapInstance);
-    marker.bindPopup(`<b>${regionSido} ${regionGungu}</b>`).openPopup();
-    setTimeout(() => {
-      if (regionMapInstance) regionMapInstance.invalidateSize();
-    }, 80);
-  }
+  function renderDetailSvg(sido, gungu, clickedSubName) {
+    const svgData = typeof KOREA_SVG_MAPS !== 'undefined' ? KOREA_SVG_MAPS[sido] : null;
+    detailTitleEl.textContent = sido === '해외' ? '해외 거주' : `${sido} 시 · 군 · 구`;
+    gunguHoverEl.textContent = clickedSubName || gungu;
 
-  function syncMapAndLabel() {
-    const s = state.answers.regionSido;
-    const g = state.answers.regionGungu;
-    const c = (KOREA_REGIONS[s] && KOREA_REGIONS[s].districts[g]) || [37.5665, 126.978];
-    labelEl.textContent = `📍 ${s} ${g}`;
-    coordsEl.textContent = `${c[0].toFixed(4)}, ${c[1].toFixed(4)}`;
-    saveAppState();
+    if (!svgData) {
+      detailContainerEl.innerHTML = `
+        <div class="region-svg-overseas">
+          <div style="font-size: 32px;">🌍</div>
+          <div>${gungu}</div>
+          <div style="font-size: 11.5px; opacity: 0.8;">왼쪽 한국 지도를 클릭하면 국내 지역으로 돌아옵니다</div>
+        </div>
+      `;
+      return;
+    }
 
-    if (regionMapInstance && marker) {
-      const targetZoom = s === '해외' ? 4 : 12;
-      regionMapInstance.flyTo(c, targetZoom, { duration: 0.6 });
-      marker.setLatLng(c);
-      marker.bindPopup(`<b>${s} ${g}</b>`).openPopup();
+    detailContainerEl.innerHTML = `
+      <svg id="region-detail-svg" class="region-svg-box" viewBox="${svgData.viewBox}" stroke-linecap="round" stroke-linejoin="round">
+        ${svgData.paths
+          .map((p) => {
+            const active = isSvgDistrictMatched(p.id, gungu, sido);
+            return `<path class="region-svg-path ${active ? 'active' : ''}" data-svg-gungu="${p.id}" d="${p.d}" />`;
+          })
+          .join('')}
+      </svg>
+    `;
+
+    const detailSvgEl = document.getElementById('region-detail-svg');
+    if (detailSvgEl) {
+      detailSvgEl.querySelectorAll('.region-svg-path').forEach((pathEl) => {
+        const svgId = pathEl.dataset.svgGungu;
+        pathEl.addEventListener('mouseenter', () => {
+          gunguHoverEl.textContent = svgId;
+        });
+        pathEl.addEventListener('mouseleave', () => {
+          gunguHoverEl.textContent = state.answers.regionGungu;
+        });
+        pathEl.addEventListener('click', () => {
+          const resolved = resolveGunguFromSvgId(svgId, state.answers.regionSido);
+          if (!resolved) return;
+          state.answers.regionGungu = resolved;
+          gunguEl.value = resolved;
+          syncMapAndLabel(svgId !== resolved ? svgId : null);
+        });
+      });
     }
   }
+
+  function syncMapAndLabel(clickedSubName = null) {
+    const s = state.answers.regionSido;
+    const g = state.answers.regionGungu;
+    const displaySub = clickedSubName ? `${g} (${clickedSubName})` : g;
+    labelEl.textContent = `📍 ${s} ${displaySub}`;
+    coordsEl.textContent = s === '해외' ? '해외 거주' : '지도에서 구/시/군 클릭 가능';
+    sidoHoverEl.textContent = s;
+    saveAppState();
+
+    const targetSvgSido = REGION_SIDO_TO_SVG[s] || s;
+    nationalSvgEl.querySelectorAll('.region-svg-path').forEach((pathEl) => {
+      pathEl.classList.toggle('active', pathEl.dataset.svgSido === targetSvgSido);
+    });
+    renderDetailSvg(s, g, clickedSubName);
+  }
+
+  nationalSvgEl.querySelectorAll('.region-svg-path').forEach((pathEl) => {
+    const rawSido = pathEl.dataset.svgSido;
+    const mappedSido = SVG_SIDO_TO_REGION[rawSido] || rawSido;
+    pathEl.addEventListener('mouseenter', () => {
+      sidoHoverEl.textContent = mappedSido;
+    });
+    pathEl.addEventListener('mouseleave', () => {
+      sidoHoverEl.textContent = state.answers.regionSido;
+    });
+    pathEl.addEventListener('click', () => {
+      if (!KOREA_REGIONS[mappedSido]) return;
+      state.answers.regionSido = mappedSido;
+      sidoEl.value = mappedSido;
+      const nextGungus = Object.keys(KOREA_REGIONS[mappedSido].districts);
+      state.answers.regionGungu = nextGungus[0];
+      gunguEl.innerHTML = nextGungus.map((g) => `<option value="${g}">${g}</option>`).join('');
+      gunguEl.value = state.answers.regionGungu;
+      syncMapAndLabel();
+    });
+  });
 
   sidoEl.addEventListener('change', () => {
     const nextSido = sidoEl.value;
@@ -880,6 +975,8 @@ function renderRegionStep(q) {
     state.answers.regionGungu = gunguEl.value;
     syncMapAndLabel();
   });
+
+  syncMapAndLabel();
 
   document.getElementById('btn-region-next').addEventListener('click', () => {
     goNextStep();
@@ -2250,7 +2347,6 @@ document.getElementById('btn-result-back').addEventListener('click', () => {
 // 전체 초기화 및 복원
 function resetAllData() {
   clearLifeTimer();
-  clearRegionMap();
   state.currentStep = 0;
   state.answers = createDefaultAnswers();
   lastResult = null;
