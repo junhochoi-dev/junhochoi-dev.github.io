@@ -537,6 +537,10 @@ body {
   background: var(--surface-muted);
 }
 
+#work-region-wrap .region-map-wrap {
+  margin-top: 14px;
+}
+
 .region-map-bar {
   display: flex;
   justify-content: space-between;
