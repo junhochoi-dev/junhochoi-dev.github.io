@@ -2337,12 +2337,15 @@ function evaluateResult() {
   const summaryItems = summarySections.flatMap((sec) => sec.rows.flatMap((r) => r.cells));
 
   const metrics = [
-    { label: '스펙 (피지컬·학력·직업·소득·연령)', score: specPercent },
-    { label: '자산 (부동산·주거비·저축·차량)', score: assetPercent },
-    { label: '자기관리 · 생활 (운동·흡연·음주·식단)', score: selfcarePercent },
-    { label: '연애 이력 (경험·최장기간)', score: lovePercent },
-    { label: '메타인지 (눈높이 균형)', score: metaPercent }
-  ];
+    { name: '스펙', sub: '피지컬·학력·직업·소득', label: '스펙 (피지컬·학력·직업·소득·연령)', score: specPercent },
+    { name: '자산', sub: '부동산·주거비·저축·차량', label: '자산 (부동산·주거비·저축·차량)', score: assetPercent },
+    { name: '자기관리', sub: '운동·흡연·음주·식단', label: '자기관리 · 생활 (운동·흡연·음주·식단)', score: selfcarePercent },
+    { name: '연애 이력', sub: '경험·최장기간', label: '연애 이력 (경험·최장기간)', score: lovePercent },
+    { name: '메타인지', sub: '눈높이 균형', label: '메타인지 (눈높이 균형)', score: metaPercent }
+  ].map((m) => {
+    const t = resolveSubTier(m.score);
+    return { ...m, tier: t.tier, baseTier: t.base };
+  });
 
   const restoreCode = encodeResultCode(a);
 
@@ -2389,21 +2392,33 @@ function renderResult(res) {
   document.getElementById('res-comment').textContent = extraComment;
   document.getElementById('res-advice').textContent = `💡 매니저 처방: ${profile.advice}`;
 
+  const ringCirc = 2 * Math.PI * 30;
   const metricsEl = document.getElementById('res-metrics');
   metricsEl.innerHTML = res.metrics
-    .map(
-      (m) => `
-      <div class="metric-row">
-        <div class="metric-top">
-          <span>${m.label}</span>
-          <span>${m.score}점</span>
+    .map((m) => {
+      const t = m.tier && m.baseTier ? { tier: m.tier, base: m.baseTier } : resolveSubTier(m.score);
+      const offset = ringCirc * (1 - m.score / 100);
+      const title = m.name || m.label.split(' (')[0];
+      const sub = m.sub || (m.label.includes('(') ? m.label.split('(')[1].replace(')', '') : '');
+      return `
+      <div class="metric-card tier-${t.base}">
+        <div class="metric-ring-wrap">
+          <svg class="metric-ring-svg" viewBox="0 0 72 72">
+            <circle class="metric-ring-track" cx="36" cy="36" r="30"></circle>
+            <circle class="metric-ring-fill" cx="36" cy="36" r="30"
+              stroke-dasharray="${ringCirc.toFixed(2)}"
+              stroke-dashoffset="${offset.toFixed(2)}"></circle>
+          </svg>
+          <div class="metric-ring-center">
+            <span class="metric-tier">${t.tier}</span>
+            <span class="metric-score">${m.score}점</span>
+          </div>
         </div>
-        <div class="metric-bar-bg">
-          <div class="metric-bar-fill" style="width: ${m.score}%"></div>
-        </div>
+        <div class="metric-name">${title}</div>
+        <div class="metric-sub">${sub}</div>
       </div>
-    `
-    )
+    `;
+    })
     .join('');
 
   const sections = res.summarySections || [];
@@ -2504,7 +2519,7 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
     36 + headlineLines.length * 26 + 10 + commentLines.length * 22 + 12 + adviceLines.length * 22 + 20
   );
   const metricsTop = 180 + verdictHeight + 36;
-  const metricsHeight = lastResult.metrics.length * 56;
+  const metricsHeight = 166;
   const resumeSections = lastResult.summarySections || [];
   const summaryTop = metricsTop + metricsHeight + 38;
   const totalSectionRows = resumeSections.reduce((sum, s) => sum + (s.rows ? s.rows.length : 0), 0);
@@ -2593,28 +2608,61 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
     vy += 22;
   });
 
-  // 항목별 평가 점수
+  // 항목별 등급 · 점수 (원형 게이지 카드)
   ctx.fillStyle = '#181c23';
   ctx.font = 'bold 16px sans-serif';
-  ctx.fillText('항목별 평가 점수', 64, metricsTop - 16);
+  ctx.textAlign = 'left';
+  ctx.fillText('항목별 등급 · 점수', 64, metricsTop - 16);
 
-  let my = metricsTop + 8;
-  lastResult.metrics.forEach((m) => {
+  const mGap = 10;
+  const mCount = lastResult.metrics.length || 5;
+  const mCardW = (692 - mGap * (mCount - 1)) / mCount;
+  const mCardH = 148;
+  lastResult.metrics.forEach((m, idx) => {
+    const t = m.tier && m.baseTier ? { tier: m.tier, base: m.baseTier } : resolveSubTier(m.score);
+    const mx = 64 + idx * (mCardW + mGap);
+    const my = metricsTop;
+    const cx = mx + mCardW / 2;
+    const cy = my + 48;
+    const r = 28;
+
+    ctx.fillStyle = '#f8f9fb';
+    roundRect(ctx, mx, my, mCardW, mCardH, 14);
+    ctx.fill();
+    ctx.strokeStyle = '#e3e6ec';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#e3e7ef';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * m.score) / 100);
+    ctx.strokeStyle = tierColors[t.base] || '#1c2434';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = tierColors[t.base] || '#1c2434';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText(t.tier, cx, cy + 3);
+    ctx.fillStyle = '#5f6673';
+    ctx.font = '700 10.5px sans-serif';
+    ctx.fillText(`${m.score}점`, cx, cy + 16);
+
+    const mTitle = m.name || m.label.split(' (')[0];
+    const mSub = m.sub || (m.label.includes('(') ? m.label.split('(')[1].replace(')', '') : '');
     ctx.fillStyle = '#181c23';
-    ctx.font = '600 14.5px sans-serif';
-    ctx.fillText(m.label, 64, my);
-    ctx.textAlign = 'right';
-    ctx.fillText(`${m.score}점`, 756, my);
+    ctx.font = 'bold 12.5px sans-serif';
+    ctx.fillText(mTitle, cx, my + 104);
+    ctx.fillStyle = '#5f6673';
+    ctx.font = '500 10px sans-serif';
+    ctx.fillText(mSub.slice(0, 14), cx, my + 122);
     ctx.textAlign = 'left';
-
-    ctx.fillStyle = '#ebeef3';
-    roundRect(ctx, 64, my + 10, 692, 10, 5);
-    ctx.fill();
-
-    ctx.fillStyle = '#1c2434';
-    roundRect(ctx, 64, my + 10, (692 * m.score) / 100, 10, 5);
-    ctx.fill();
-    my += 54;
   });
 
   // 입력 정보 종합 프로필 (다중 열 · 체크박스 · 배지형 이력서)
