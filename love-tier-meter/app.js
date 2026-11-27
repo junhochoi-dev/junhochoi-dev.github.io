@@ -23,6 +23,8 @@ function createDefaultAnswers() {
     mbti: { ei: null, sn: null, tf: null, jp: null },
     regionSido: '서울특별시',
     regionGungu: '강남구',
+    workSido: '서울특별시',
+    workGungu: '강남구',
     heightCm: '',
     weightKg: '',
     educationDegree: null,
@@ -102,6 +104,12 @@ function clearRegionMap() {}
 function getRegionDisplay(a = state.answers) {
   const sido = a.regionSido || '서울특별시';
   const gungu = a.regionGungu || '';
+  return gungu ? `${sido} ${gungu}` : sido;
+}
+
+function getWorkRegionDisplay(a = state.answers) {
+  const sido = a.workSido || '서울특별시';
+  const gungu = a.workGungu || '';
   return gungu ? `${sido} ${gungu}` : sido;
 }
 
@@ -799,86 +807,75 @@ function resolveGunguFromSvgId(svgId, sido) {
   return null;
 }
 
-function renderRegionStep(q) {
+function renderRegionSelectorHtml(prefix, rawSido, rawGungu) {
   const sidoList = Object.keys(KOREA_REGIONS);
-  if (!KOREA_REGIONS[state.answers.regionSido]) {
-    state.answers.regionSido = sidoList[0];
-  }
-  const sidoObj = KOREA_REGIONS[state.answers.regionSido];
+  const sido = KOREA_REGIONS[rawSido] ? rawSido : sidoList[0];
+  const sidoObj = KOREA_REGIONS[sido];
   const gunguList = Object.keys(sidoObj.districts);
-  if (!sidoObj.districts[state.answers.regionGungu]) {
-    state.answers.regionGungu = gunguList[0];
-  }
-
-  const { regionSido, regionGungu } = state.answers;
+  const gungu = sidoObj.districts[rawGungu] ? rawGungu : gunguList[0];
   const nationalSvg = typeof KOREA_SVG_MAPS !== 'undefined' ? KOREA_SVG_MAPS['전국'] : null;
 
-  quizBody.innerHTML = `
-    <span class="q-step-badge">${q.stepTitle}</span>
-    ${getGreetingHtml(q)}
-    <h2 class="q-title">${q.title}</h2>
-    <p class="q-desc">${q.desc}</p>
-    <div class="profile-form">
+  return {
+    sido,
+    gungu,
+    html: `
       <div class="region-select-grid">
         <div>
           <span class="field-label">시 · 도</span>
-          <select id="select-sido" class="select-input">
-            ${sidoList.map((s) => `<option value="${s}" ${regionSido === s ? 'selected' : ''}>${s}</option>`).join('')}
+          <select id="${prefix}-select-sido" class="select-input">
+            ${sidoList.map((s) => `<option value="${s}" ${sido === s ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
         </div>
         <div>
           <span class="field-label">시 · 군 · 구</span>
-          <select id="select-gungu" class="select-input">
-            ${gunguList.map((g) => `<option value="${g}" ${regionGungu === g ? 'selected' : ''}>${g}</option>`).join('')}
+          <select id="${prefix}-select-gungu" class="select-input">
+            ${gunguList.map((g) => `<option value="${g}" ${gungu === g ? 'selected' : ''}>${g}</option>`).join('')}
           </select>
         </div>
       </div>
 
       <div class="region-map-wrap">
         <div class="region-map-bar">
-          <span id="region-map-label">📍 ${regionSido} ${regionGungu}</span>
-          <span id="region-map-coords" class="region-map-coords">SVG 지도 클릭으로도 선택 가능</span>
+          <span id="${prefix}-map-label">📍 ${sido} ${gungu}</span>
+          <span id="${prefix}-map-coords" class="region-map-coords">SVG 지도 클릭으로도 선택 가능</span>
         </div>
         <div class="region-svg-grid">
           <div class="region-svg-panel">
             <div class="region-svg-panel-head">
               <span>대한민국 시 · 도</span>
-              <span id="region-sido-hover" class="region-svg-hover">${regionSido}</span>
+              <span id="${prefix}-sido-hover" class="region-svg-hover">${sido}</span>
             </div>
-            <svg id="region-national-svg" class="region-svg-box" viewBox="${nationalSvg ? nationalSvg.viewBox : '0 0 800 759'}" stroke-linecap="round" stroke-linejoin="round">
+            <svg id="${prefix}-national-svg" class="region-svg-box" viewBox="${nationalSvg ? nationalSvg.viewBox : '0 0 800 759'}" stroke-linecap="round" stroke-linejoin="round">
               ${nationalSvg ? nationalSvg.paths.map((p) => `<path class="region-svg-path" data-svg-sido="${p.id}" d="${p.d}" />`).join('') : ''}
             </svg>
           </div>
           <div class="region-svg-panel">
             <div class="region-svg-panel-head">
-              <span id="region-detail-title">${regionSido} 시 · 군 · 구</span>
-              <span id="region-gungu-hover" class="region-svg-hover">${regionGungu}</span>
+              <span id="${prefix}-detail-title">${sido} 시 · 군 · 구</span>
+              <span id="${prefix}-gungu-hover" class="region-svg-hover">${gungu}</span>
             </div>
-            <div id="region-detail-container"></div>
+            <div id="${prefix}-detail-container"></div>
           </div>
         </div>
       </div>
+    `
+  };
+}
 
-      <div class="quiz-nav-row">
-        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
-        <button type="button" id="btn-region-next" class="btn-primary">다음 문항으로</button>
-      </div>
-    </div>
-  `;
-
-  const sidoEl = document.getElementById('select-sido');
-  const gunguEl = document.getElementById('select-gungu');
-  const labelEl = document.getElementById('region-map-label');
-  const coordsEl = document.getElementById('region-map-coords');
-  const nationalSvgEl = document.getElementById('region-national-svg');
-  const detailContainerEl = document.getElementById('region-detail-container');
-  const detailTitleEl = document.getElementById('region-detail-title');
-  const sidoHoverEl = document.getElementById('region-sido-hover');
-  const gunguHoverEl = document.getElementById('region-gungu-hover');
+function mountRegionSelector({ prefix, sidoKey, gunguKey }) {
+  const sidoEl = document.getElementById(`${prefix}-select-sido`);
+  const gunguEl = document.getElementById(`${prefix}-select-gungu`);
+  const labelEl = document.getElementById(`${prefix}-map-label`);
+  const coordsEl = document.getElementById(`${prefix}-map-coords`);
+  const nationalSvgEl = document.getElementById(`${prefix}-national-svg`);
+  const detailContainerEl = document.getElementById(`${prefix}-detail-container`);
+  const detailTitleEl = document.getElementById(`${prefix}-detail-title`);
+  const sidoHoverEl = document.getElementById(`${prefix}-sido-hover`);
+  const gunguHoverEl = document.getElementById(`${prefix}-gungu-hover`);
 
   function renderDetailSvg(sido, gungu, clickedSubName) {
     const svgData = typeof KOREA_SVG_MAPS !== 'undefined' ? KOREA_SVG_MAPS[sido] : null;
-    detailTitleEl.textContent = sido === '해외' ? '해외 거주' : `${sido} 시 · 군 · 구`;
+    detailTitleEl.textContent = sido === '해외' ? '해외 근무' : `${sido} 시 · 군 · 구`;
     gunguHoverEl.textContent = clickedSubName || gungu;
 
     if (!svgData) {
@@ -893,7 +890,7 @@ function renderRegionStep(q) {
     }
 
     detailContainerEl.innerHTML = `
-      <svg id="region-detail-svg" class="region-svg-box" viewBox="${svgData.viewBox}" stroke-linecap="round" stroke-linejoin="round">
+      <svg id="${prefix}-detail-svg" class="region-svg-box" viewBox="${svgData.viewBox}" stroke-linecap="round" stroke-linejoin="round">
         ${svgData.paths
           .map((p) => {
             const active = isSvgDistrictMatched(p.id, gungu, sido);
@@ -903,7 +900,7 @@ function renderRegionStep(q) {
       </svg>
     `;
 
-    const detailSvgEl = document.getElementById('region-detail-svg');
+    const detailSvgEl = document.getElementById(`${prefix}-detail-svg`);
     if (detailSvgEl) {
       detailSvgEl.querySelectorAll('.region-svg-path').forEach((pathEl) => {
         const svgId = pathEl.dataset.svgGungu;
@@ -911,12 +908,12 @@ function renderRegionStep(q) {
           gunguHoverEl.textContent = svgId;
         });
         pathEl.addEventListener('mouseleave', () => {
-          gunguHoverEl.textContent = state.answers.regionGungu;
+          gunguHoverEl.textContent = state.answers[gunguKey];
         });
         pathEl.addEventListener('click', () => {
-          const resolved = resolveGunguFromSvgId(svgId, state.answers.regionSido);
+          const resolved = resolveGunguFromSvgId(svgId, state.answers[sidoKey]);
           if (!resolved) return;
-          state.answers.regionGungu = resolved;
+          state.answers[gunguKey] = resolved;
           gunguEl.value = resolved;
           syncMapAndLabel(svgId !== resolved ? svgId : null);
         });
@@ -925,11 +922,11 @@ function renderRegionStep(q) {
   }
 
   function syncMapAndLabel(clickedSubName = null) {
-    const s = state.answers.regionSido;
-    const g = state.answers.regionGungu;
+    const s = state.answers[sidoKey];
+    const g = state.answers[gunguKey];
     const displaySub = clickedSubName ? `${g} (${clickedSubName})` : g;
     labelEl.textContent = `📍 ${s} ${displaySub}`;
-    coordsEl.textContent = s === '해외' ? '해외 거주' : '지도에서 구/시/군 클릭 가능';
+    coordsEl.textContent = s === '해외' ? '해외 선택됨' : '지도에서 구/시/군 클릭 가능';
     sidoHoverEl.textContent = s;
     saveAppState();
 
@@ -947,36 +944,58 @@ function renderRegionStep(q) {
       sidoHoverEl.textContent = mappedSido;
     });
     pathEl.addEventListener('mouseleave', () => {
-      sidoHoverEl.textContent = state.answers.regionSido;
+      sidoHoverEl.textContent = state.answers[sidoKey];
     });
     pathEl.addEventListener('click', () => {
       if (!KOREA_REGIONS[mappedSido]) return;
-      state.answers.regionSido = mappedSido;
+      state.answers[sidoKey] = mappedSido;
       sidoEl.value = mappedSido;
       const nextGungus = Object.keys(KOREA_REGIONS[mappedSido].districts);
-      state.answers.regionGungu = nextGungus[0];
+      state.answers[gunguKey] = nextGungus[0];
       gunguEl.innerHTML = nextGungus.map((g) => `<option value="${g}">${g}</option>`).join('');
-      gunguEl.value = state.answers.regionGungu;
+      gunguEl.value = state.answers[gunguKey];
       syncMapAndLabel();
     });
   });
 
   sidoEl.addEventListener('change', () => {
     const nextSido = sidoEl.value;
-    state.answers.regionSido = nextSido;
+    state.answers[sidoKey] = nextSido;
     const nextGungus = Object.keys(KOREA_REGIONS[nextSido].districts);
-    state.answers.regionGungu = nextGungus[0];
+    state.answers[gunguKey] = nextGungus[0];
     gunguEl.innerHTML = nextGungus.map((g) => `<option value="${g}">${g}</option>`).join('');
-    gunguEl.value = state.answers.regionGungu;
+    gunguEl.value = state.answers[gunguKey];
     syncMapAndLabel();
   });
 
   gunguEl.addEventListener('change', () => {
-    state.answers.regionGungu = gunguEl.value;
+    state.answers[gunguKey] = gunguEl.value;
     syncMapAndLabel();
   });
 
   syncMapAndLabel();
+}
+
+function renderRegionStep(q) {
+  const sel = renderRegionSelectorHtml('region', state.answers.regionSido, state.answers.regionGungu);
+  state.answers.regionSido = sel.sido;
+  state.answers.regionGungu = sel.gungu;
+
+  quizBody.innerHTML = `
+    <span class="q-step-badge">${q.stepTitle}</span>
+    ${getGreetingHtml(q)}
+    <h2 class="q-title">${q.title}</h2>
+    <p class="q-desc">${q.desc}</p>
+    <div class="profile-form">
+      ${sel.html}
+      <div class="quiz-nav-row">
+        <button type="button" class="btn-secondary btn-quiz-back">← 뒤로가기</button>
+        <button type="button" id="btn-region-next" class="btn-primary">다음 문항으로</button>
+      </div>
+    </div>
+  `;
+
+  mountRegionSelector({ prefix: 'region', sidoKey: 'regionSido', gunguKey: 'regionGungu' });
 
   document.getElementById('btn-region-next').addEventListener('click', () => {
     goNextStep();
@@ -1220,6 +1239,11 @@ function estimateAfterTaxManwon(grossManwon) {
 
 function renderJobStep(q) {
   const { employmentType, salaryManwon, incentiveManwon } = state.answers;
+  const workSel = renderRegionSelectorHtml('work', state.answers.workSido, state.answers.workGungu);
+  state.answers.workSido = workSel.sido;
+  state.answers.workGungu = workSel.gungu;
+  const hideWorkRegion = Boolean(employmentType !== null && q.employmentOptions[employmentType] && q.employmentOptions[employmentType].zeroSalaryDefault);
+
   quizBody.innerHTML = `
     <span class="q-step-badge">${q.stepTitle}</span>
     ${getGreetingHtml(q)}
@@ -1240,6 +1264,11 @@ function renderJobStep(q) {
             )
             .join('')}
         </div>
+      </div>
+
+      <div id="work-region-wrap" style="display: ${hideWorkRegion ? 'none' : 'block'};">
+        <span class="field-label">직장 위치</span>
+        ${workSel.html}
       </div>
 
       <div>
@@ -1315,6 +1344,9 @@ function renderJobStep(q) {
     errorEl.textContent = '';
   }
 
+  const workRegionWrap = document.getElementById('work-region-wrap');
+  mountRegionSelector({ prefix: 'work', sidoKey: 'workSido', gunguKey: 'workGungu' });
+
   quizBody.querySelectorAll('[data-emp-idx]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const idx = Number(btn.dataset.empIdx);
@@ -1325,6 +1357,9 @@ function renderJobStep(q) {
         b.classList.toggle('selected', active);
         b.querySelector('.option-check').textContent = active ? '✓' : '';
       });
+      if (workRegionWrap) {
+        workRegionWrap.style.display = q.employmentOptions[idx].zeroSalaryDefault ? 'none' : 'block';
+      }
       if (q.employmentOptions[idx].zeroSalaryDefault) {
         if (salaryEl.value.trim() === '') salaryEl.value = '0';
         if (incEl.value.trim() === '') incEl.value = '0';
@@ -1887,10 +1922,14 @@ function evaluateResult() {
     else ageScore = 5;
   }
 
-  // 지표 1: 자산 · 스펙
-  const rawAssetSpec =
-    heightSpec + bmiSpec + eduSpec + empOpt.spec + salarySpec + (houseOpt.spec - costPenalty) + savingsSpec + carOpt.spec + ageScore;
-  const assetSpecPercent = Math.max(10, Math.min(100, Math.round((rawAssetSpec / 119) * 100)));
+  // 지표 1: 스펙 (피지컬·학력·직업·소득·연령)
+  const rawSpec = heightSpec + bmiSpec + eduSpec + empOpt.spec + salarySpec + ageScore;
+  const specPercent = Math.max(10, Math.min(100, Math.round((rawSpec / 77) * 100)));
+
+  // 지표 2: 자산 (부동산·주거비·순금융자산·차량)
+  const rawAsset = (houseOpt.spec - costPenalty) + savingsSpec + carOpt.spec;
+  const assetPercent = Math.max(10, Math.min(100, Math.round((rawAsset / 42) * 100)));
+  const assetSpecPercent = Math.round(specPercent * 0.55 + assetPercent * 0.45);
 
   // 지표 2: 자기관리 · 생활
   const selfQ = getQuestionById('selfcare');
@@ -1931,13 +1970,14 @@ function evaluateResult() {
     15,
     Math.min(
       98,
-      Math.round(assetSpecPercent * 0.48 + selfcarePercent * 0.24 + lovePercent * 0.16 + metaPercent * 0.12 - hurdlePenalty * 0.4)
+      Math.round(specPercent * 0.26 + assetPercent * 0.22 + selfcarePercent * 0.24 + lovePercent * 0.16 + metaPercent * 0.12 - hurdlePenalty * 0.4)
     )
   );
 
   const tierObj = resolveSubTier(totalScore);
   const mbtiStr = getMbtiString(a.mbti) || '-';
   const regionText = getRegionDisplay(a);
+  const workRegionText = empOpt.zeroSalaryDefault ? '해당 없음' : getWorkRegionDisplay(a);
 
   const summaryItems = [
     { key: '이름', val: `${displayName}${a.isNamePrivate ? ' (비공개)' : ''}` },
@@ -1946,6 +1986,7 @@ function evaluateResult() {
     { key: '신체 · BMI', val: `${h}cm · ${w}kg (${bmi.toFixed(1)} · ${getBmiCategory(bmi)})` },
     { key: '최종 학력', val: tierOpt ? `${degOpt.label} (${tierOpt.label.split(' ')[0]})` : degOpt.label },
     { key: '고용 형태', val: empOpt.label },
+    { key: '직장 위치', val: workRegionText },
     { key: '소득 (세전 / 월 실수령)', val: `${formatManwonKorean(grossSalary)} / 월 ${formatManwonKorean(monthlyNet)}` },
     { key: '부동산 · 주거비', val: `${houseOpt.label} (월 ${houseCost}만원)` },
     { key: '순 금융자산', val: formatManwonKorean(netFinancial) },
@@ -1957,7 +1998,8 @@ function evaluateResult() {
   ];
 
   const metrics = [
-    { label: '자산 · 스펙 (부동산·저축·소득·피지컬)', score: assetSpecPercent },
+    { label: '스펙 (피지컬·학력·직업·소득·연령)', score: specPercent },
+    { label: '자산 (부동산·주거비·저축·차량)', score: assetPercent },
     { label: '자기관리 · 생활 (운동·흡연·음주·식단)', score: selfcarePercent },
     { label: '연애 이력 (경험·최장기간)', score: lovePercent },
     { label: '메타인지 (눈높이 균형)', score: metaPercent }

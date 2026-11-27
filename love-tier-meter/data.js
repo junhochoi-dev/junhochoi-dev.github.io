@@ -138,7 +138,7 @@ const QUESTIONS = [
   {
     id: 'job',
     stepTitle: '직업 · 소득',
-    title: '고용 형태와 연봉·인센티브를 알려주세요',
+    title: '고용 형태·직장 위치와 연봉·인센티브를 알려주세요',
     desc: '순 계약 연봉과 인센티브를 합산해 세전·세후 총합을 계산합니다.',
     type: 'job',
     employmentOptions: [
