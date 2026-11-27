@@ -1825,21 +1825,6 @@ function resolveSubTier(score) {
   return SUB_TIER_THRESHOLDS[SUB_TIER_THRESHOLDS.length - 1];
 }
 
-function computeResultHash(payload) {
-  const str = JSON.stringify(payload);
-  const seeds = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35];
-  return seeds
-    .map((seed, sIdx) => {
-      let h = seed >>> 0;
-      for (let i = 0; i < str.length; i += 1) {
-        h ^= str.charCodeAt(i) + sIdx * 31;
-        h = Math.imul(h, 0x01000193) >>> 0;
-      }
-      return h.toString(16).padStart(8, '0').toUpperCase();
-    })
-    .join('');
-}
-
 const TOKEN_PREFIX = 'LTM1.';
 const TOKEN_KEY = 'LoveTierMeter#2026!EnumCipherKey';
 const BLOOD_ENUM = ['A', 'B', 'O', 'AB'];
@@ -2231,12 +2216,6 @@ function evaluateResult() {
     { label: '메타인지 (눈높이 균형)', score: metaPercent }
   ];
 
-  const resultHash = computeResultHash({
-    answers: a,
-    totalScore,
-    actualTier: tierObj.tier,
-    metrics
-  });
   const restoreCode = encodeResultCode(a);
 
   return {
@@ -2253,7 +2232,6 @@ function evaluateResult() {
     eyePenalty,
     summaryItems,
     metrics,
-    resultHash,
     restoreCode
   };
 }
@@ -2314,12 +2292,6 @@ function renderResult(res) {
     })
     .join('');
 
-  const hashEl = document.getElementById('res-hash-value');
-  if (hashEl) {
-    const hash = res.resultHash || computeResultHash({ totalScore: res.totalScore, actualTier: res.actualTier, metrics: res.metrics, summaryItems: res.summaryItems });
-    res.resultHash = hash;
-    hashEl.textContent = hash;
-  }
   const restoreEl = document.getElementById('res-restore-code');
   if (restoreEl) {
     const code = res.restoreCode || encodeResultCode(state.answers);
@@ -2380,8 +2352,10 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
   const summaryRows = Math.ceil(lastResult.summaryItems.length / 2);
   const summaryTop = metricsTop + metricsHeight + 38;
   const summaryHeight = summaryRows * 42 + 44;
+  ctx.font = '600 12px monospace';
+  const codeLines = getWrappedLines(ctx, `CODE: ${lastResult.restoreCode || '-'}`, 692);
   const hashTop = summaryTop + summaryHeight + 24;
-  const cardHeight = hashTop + 72;
+  const cardHeight = hashTop + codeLines.length * 18 + 54;
 
   canvas.height = cardHeight + 60;
 
@@ -2549,8 +2523,10 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
 
   ctx.textAlign = 'left';
   ctx.fillStyle = '#5f6673';
-  ctx.font = '600 12.5px monospace';
-  ctx.fillText(`HASH: ${lastResult.resultHash || '-'}`, 64, hashTop);
+  ctx.font = '600 12px monospace';
+  codeLines.forEach((ln, idx) => {
+    ctx.fillText(ln, 64, hashTop + idx * 18);
+  });
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#8b92a0';
@@ -2590,17 +2566,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   ctx.fillText(line, x, y);
 }
 
-// 결과 해시 및 복원 코드 복사
-document.getElementById('btn-copy-hash').addEventListener('click', async () => {
-  if (!lastResult || !lastResult.resultHash) return;
-  try {
-    await navigator.clipboard.writeText(lastResult.resultHash);
-    showToast('결과 해시값이 복사되었습니다!');
-  } catch {
-    showToast('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
-  }
-});
-
+// 결과 복원 코드 복사
 document.getElementById('btn-copy-restore').addEventListener('click', async () => {
   if (!lastResult || !lastResult.restoreCode) return;
   try {
@@ -2646,7 +2612,7 @@ if (btnApplyRestore && inputRestoreCode) {
 // 결과 텍스트 + URL 복사
 document.getElementById('btn-copy-link').addEventListener('click', async () => {
   if (!lastResult) return;
-  const text = `[연애등급측정기 - ${lastResult.displayName}]\n판정 결과: ${lastResult.actualTier}등급 · ${TIER_PROFILES[lastResult.baseTier].label} (${lastResult.totalScore}점)\n${TIER_PROFILES[lastResult.baseTier].headline}\nHASH: ${lastResult.resultHash || '-'}\n${window.location.href}`;
+  const text = `[연애등급측정기 - ${lastResult.displayName}]\n판정 결과: ${lastResult.actualTier}등급 · ${TIER_PROFILES[lastResult.baseTier].label} (${lastResult.totalScore}점)\n${TIER_PROFILES[lastResult.baseTier].headline}\n복원 코드: ${lastResult.restoreCode || '-'}\n${window.location.href}`;
   try {
     await navigator.clipboard.writeText(text);
     showToast('결과가 클립보드에 복사되었습니다!');
