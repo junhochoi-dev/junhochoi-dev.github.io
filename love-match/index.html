@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>연애 궁합 측정기 | 두 사람의 해시 케미는?</title>
+  <meta name="description" content="연애등급측정기에서 발급받은 두 사람의 해시값으로 궁합 점수와 세부 케미를 확인해 보세요." />
+  <meta property="og:title" content="연애 궁합 측정기 - 해시 기반 커플 궁합 테스트" />
+  <meta property="og:description" content="두 사람의 결과 해시값을 입력하면 결정론적 궁합 점수와 4가지 케미 지표를 분석해 드립니다." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="/toy/" class="brand-badge brand-link">SOLO RATING LAB</a>
+        <span class="topbar-sub">연애 궁합 측정기</span>
+      </div>
+      <div class="topbar-right">
+        <a href="/love-tier-meter/" class="btn-nav-top">등급 측정기</a>
+        <button type="button" id="btn-reset-all" class="btn-reset-top">초기화하기</button>
+      </div>
+    </header>
+
+    <main class="main-stack">
+      <section class="hero-card">
+        <div class="hero-tag">HASH COMPATIBILITY TEST</div>
+        <h1 class="hero-title">연애 궁합 측정기</h1>
+        <p class="hero-desc">
+          연애등급측정기에서 발급받은 두 사람의 해시값(HASH)을 입력하면<br />
+          우리 둘의 궁합 점수와 세부 케미를 계산해 드립니다.
+        </p>
+
+        <div class="inputs-grid">
+          <div class="input-field">
+            <label class="field-label" for="hash-a">
+              <span class="person-pill pill-a">PERSON A</span> 첫 번째 해시값
+            </label>
+            <input
+              id="hash-a"
+              type="text"
+              class="text-input"
+              placeholder="32자리 해시값 (예: 8F4E2A9C...)"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+
+          <div class="plus-badge" aria-hidden="true">+</div>
+
+          <div class="input-field">
+            <label class="field-label" for="hash-b">
+              <span class="person-pill pill-b">PERSON B</span> 두 번째 해시값
+            </label>
+            <input
+              id="hash-b"
+              type="text"
+              class="text-input"
+              placeholder="32자리 해시값 (예: 3C91D0E4...)"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button type="button" id="btn-calc" class="btn-primary">궁합 점수 측정하기</button>
+          <div class="sub-action-row">
+            <button type="button" id="btn-sample" class="btn-secondary">샘플 해시 채우기</button>
+            <button type="button" id="btn-swap" class="btn-secondary">순서 바꾸기</button>
+          </div>
+        </div>
+
+        <p id="error-msg" class="error-msg" role="alert" hidden></p>
+
+        <div class="privacy-banner">
+          🔒 입력하신 해시값은 <strong>브라우저 내에서만 계산</strong>되며, 외부 서버에 저장되거나 전송되지 않습니다.
+        </div>
+      </section>
+
+      <section id="result-card" class="result-card" hidden>
+        <div class="result-header">
+          <div class="result-meta">
+            <span class="profile-badge">COUPLE COMPATIBILITY</span>
+            <span class="doc-id" id="res-pair-id">PAIR · -</span>
+          </div>
+          <h2 class="result-title">해시 궁합 분석 리포트</h2>
+        </div>
+
+        <div class="result-top-row">
+          <div id="res-tier-box" class="tier-badge-compact tier-B">
+            <span class="compare-label">궁합 점수</span>
+            <span id="res-score" class="compact-tier-letter">0</span>
+            <span id="res-grade-short" class="compact-tier-sub">-</span>
+          </div>
+          <div class="verdict-compact">
+            <h3 id="res-headline" class="verdict-headline">-</h3>
+            <p id="res-comment" class="verdict-comment"></p>
+          </div>
+        </div>
+
+        <div class="score-bar-track" aria-hidden="true">
+          <div id="res-score-fill" class="score-bar-fill" style="width: 0%;"></div>
+        </div>
+
+        <div class="metrics-section">
+          <h4 class="section-subtitle">세부 케미 지표</h4>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <div class="metric-top">
+                <span>가치관 싱크로율</span>
+                <strong id="m1-val">0%</strong>
+              </div>
+              <div class="mini-track"><div id="m1-bar" class="mini-fill"></div></div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-top">
+                <span>텐션 &amp; 설렘 케미</span>
+                <strong id="m2-val">0%</strong>
+              </div>
+              <div class="mini-track"><div id="m2-bar" class="mini-fill"></div></div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-top">
+                <span>소통 주파수</span>
+                <strong id="m3-val">0%</strong>
+              </div>
+              <div class="mini-track"><div id="m3-bar" class="mini-fill"></div></div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-top">
+                <span>안정감 &amp; 신뢰도</span>
+                <strong id="m4-val">0%</strong>
+              </div>
+              <div class="mini-track"><div id="m4-bar" class="mini-fill"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-footer">
+          <button type="button" id="btn-copy-link" class="btn-secondary">결과 링크 복사</button>
+          <button type="button" id="btn-copy-text" class="btn-secondary">요약 텍스트 복사</button>
+        </div>
+        <p id="copy-toast" class="copy-toast" hidden></p>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

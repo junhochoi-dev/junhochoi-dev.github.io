@@ -7,5 +7,5 @@
 - title: "연애 궁합 측정기"
   tag: "Toy · Hash Match"
   desc: "연애등급 측정기에서 발급받은 두 사람의 32자리 해시값을 입력해 궁합 점수와 세부 케미를 측정하는 서비스입니다."
-  url: "/toy/love-match/"
+  url: "/love-match/"
   url_label: "궁합 보러 가기 →"
