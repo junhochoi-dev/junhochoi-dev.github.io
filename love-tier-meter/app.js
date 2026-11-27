@@ -2190,23 +2190,45 @@ function evaluateResult() {
   const regionText = getRegionDisplay(a);
   const workRegionText = empOpt.zeroSalaryDefault ? '해당 없음' : getWorkRegionDisplay(a);
 
-  const summaryItems = [
-    { key: '이름', val: `${displayName}${a.isNamePrivate ? ' (비공개)' : ''}` },
-    { key: '혈액형 · MBTI', val: `${a.bloodType || '-'} · ${mbtiStr}` },
-    { key: '거주지', val: regionText },
-    { key: '신체 · BMI', val: `${h}cm · ${w}kg (${bmi.toFixed(1)} · ${getBmiCategory(bmi)})` },
-    { key: '최종 학력', val: tierOpt ? `${degOpt.label} (${tierOpt.label.split(' ')[0]})` : degOpt.label },
-    { key: '고용 형태', val: empOpt.label },
-    { key: '직장 위치', val: workRegionText },
-    { key: '소득 (세전 / 월 실수령)', val: `${formatManwonKorean(grossSalary)} / 월 ${formatManwonKorean(monthlyNet)}` },
-    { key: '부동산 · 주거비', val: `${houseOpt.label} (월 ${houseCost}만원)` },
-    { key: '순 금융자산', val: formatManwonKorean(netFinancial) },
-    { key: '자차 소유', val: hasCar ? carOpt.label : '없음', checkbox: true, checked: hasCar },
-    { key: '운동 습관', val: isNoExercise ? freqOpt.label : `${freqOpt.label} · ${durOpt.label} (${yrsOpt.label})` },
-    { key: '흡연 · 음주', val: `${smkOpt.label} · ${drkOpt.label}` },
-    { key: '식단 · 종교', val: `${dietOpt.label.split(' ')[0]} · ${relOpt.label.split(' ')[0]}` },
-    { key: '연애 이력', val: isNoDating ? dcOpt.label : `${dcOpt.label} (최장 ${dlOpt.label})` }
+  const summarySections = [
+    {
+      title: '01. 인적 사항',
+      items: [
+        { key: '성명', val: `${displayName}${a.isNamePrivate ? ' (비공개)' : ''}` },
+        { key: '성별 · 나이', val: `${a.gender === 'male' ? '남성' : '여성'} · 만 ${manAge}세 (연 ${yearAge}세, ${zodiac.emoji} ${zodiac.name})` },
+        { key: '혈액형 · MBTI', val: `${a.bloodType || '-'} · ${mbtiStr}` },
+        { key: '거주지', val: regionText }
+      ]
+    },
+    {
+      title: '02. 학력 · 직장 · 소득',
+      items: [
+        { key: '최종 학력', val: tierOpt ? `${degOpt.label} (${tierOpt.label.split(' ')[0]})` : degOpt.label },
+        { key: '고용 형태', val: empOpt.label },
+        { key: '직장 위치', val: workRegionText },
+        { key: '연 소득 (세전 / 월 실수령)', val: `${formatManwonKorean(grossSalary)} / 월 ${formatManwonKorean(monthlyNet)}` }
+      ]
+    },
+    {
+      title: '03. 자산 · 주거',
+      items: [
+        { key: '부동산 · 주거비', val: `${houseOpt.label} (월 ${houseCost}만원)` },
+        { key: '순 금융자산', val: formatManwonKorean(netFinancial) },
+        { key: '자차 소유', val: hasCar ? carOpt.label : '없음', checkbox: true, checked: hasCar }
+      ]
+    },
+    {
+      title: '04. 신체 · 자기관리 · 연애',
+      items: [
+        { key: '신체 · BMI', val: `${h}cm · ${w}kg (BMI ${bmi.toFixed(1)} · ${getBmiCategory(bmi)})` },
+        { key: '운동 습관', val: isNoExercise ? freqOpt.label : `${freqOpt.label} · ${durOpt.label} (${yrsOpt.label})` },
+        { key: '흡연 · 음주', val: `${smkOpt.label} · ${drkOpt.label}` },
+        { key: '식단 · 종교', val: `${dietOpt.label.split(' ')[0]} · ${relOpt.label.split(' ')[0]}` },
+        { key: '연애 이력', val: isNoDating ? dcOpt.label : `${dcOpt.label} (최장 ${dlOpt.label})` }
+      ]
+    }
   ];
+  const summaryItems = summarySections.flatMap((sec) => sec.items);
 
   const metrics = [
     { label: '스펙 (피지컬·학력·직업·소득·연령)', score: specPercent },
@@ -2231,6 +2253,7 @@ function evaluateResult() {
     hurdleTags,
     eyePenalty,
     summaryItems,
+    summarySections,
     metrics,
     restoreCode
   };
@@ -2277,19 +2300,33 @@ function renderResult(res) {
     )
     .join('');
 
+  const sections =
+    res.summarySections ||
+    [{ title: '입력 정보', items: res.summaryItems || [] }];
   const summarySheetEl = document.getElementById('res-summary-sheet');
-  summarySheetEl.innerHTML = res.summaryItems
-    .map((item) => {
-      const valHtml = item.checkbox
-        ? `<span class="resume-check ${item.checked ? 'checked' : ''}">${item.checked ? '✓' : ''}</span><span>${item.val}</span>`
-        : item.val;
-      return `
-      <div class="summary-item">
-        <span class="summary-key">${item.key}</span>
-        <span class="summary-val">${valHtml}</span>
+  summarySheetEl.innerHTML = sections
+    .map(
+      (sec) => `
+      <div class="resume-section">
+        <div class="resume-section-title">${sec.title}</div>
+        <div class="resume-table">
+          ${sec.items
+            .map((item) => {
+              const valHtml = item.checkbox
+                ? `<span class="resume-check ${item.checked ? 'checked' : ''}">${item.checked ? '✓' : ''}</span><span>${item.val}</span>`
+                : item.val;
+              return `
+              <div class="summary-item">
+                <span class="summary-key">${item.key}</span>
+                <span class="summary-val">${valHtml}</span>
+              </div>
+            `;
+            })
+            .join('')}
+        </div>
       </div>
-    `;
-    })
+    `
+    )
     .join('');
 
   const restoreEl = document.getElementById('res-restore-code');
@@ -2349,9 +2386,12 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
   );
   const metricsTop = 180 + verdictHeight + 36;
   const metricsHeight = lastResult.metrics.length * 56;
-  const summaryRows = Math.ceil(lastResult.summaryItems.length / 2);
+  const resumeSections =
+    lastResult.summarySections ||
+    [{ title: '입력 정보', items: lastResult.summaryItems || [] }];
   const summaryTop = metricsTop + metricsHeight + 38;
-  const summaryHeight = summaryRows * 42 + 44;
+  const totalSectionItems = resumeSections.reduce((sum, s) => sum + s.items.length, 0);
+  const summaryHeight = 28 + resumeSections.length * 46 + totalSectionItems * 36;
   ctx.font = '600 12px monospace';
   const codeLines = getWrappedLines(ctx, `CODE: ${lastResult.restoreCode || '-'}`, 692);
   const hashTop = summaryTop + summaryHeight + 24;
@@ -2460,65 +2500,77 @@ document.getElementById('btn-save-img').addEventListener('click', () => {
     my += 54;
   });
 
-  // 입력 정보 종합 프로필 (이력서 스타일)
+  // 입력 정보 종합 프로필 (1열 섹션형 이력서 양식)
   ctx.fillStyle = '#181c23';
   ctx.font = 'bold 16px sans-serif';
   ctx.fillText('입력 정보 종합 프로필', 64, summaryTop);
 
-  ctx.strokeStyle = '#1c2434';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(64, summaryTop + 14);
-  ctx.lineTo(756, summaryTop + 14);
-  ctx.stroke();
-
-  const colW = 334;
-  const colGap = 24;
-  lastResult.summaryItems.forEach((item, idx) => {
-    const col = idx % 2;
-    const row = Math.floor(idx / 2);
-    const x = 64 + col * (colW + colGap);
-    const y = summaryTop + 44 + row * 42;
-
-    ctx.fillStyle = '#5f6673';
-    ctx.font = '600 13.5px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(item.key, x, y);
-
-    ctx.fillStyle = '#181c23';
-    ctx.font = '700 13.5px sans-serif';
-    ctx.textAlign = 'right';
-    if (item.checkbox) {
-      const textW = ctx.measureText(item.val).width;
-      const boxX = x + colW - textW - 22;
-      const boxY = y - 12;
-      ctx.strokeStyle = item.checked ? '#1c2434' : '#9aa1ae';
-      ctx.lineWidth = 1.5;
-      roundRect(ctx, boxX, boxY, 15, 15, 3);
-      if (item.checked) {
-        ctx.fillStyle = '#1c2434';
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 11px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('✓', boxX + 7.5, boxY + 12);
-        ctx.fillStyle = '#181c23';
-        ctx.font = '700 13.5px sans-serif';
-        ctx.textAlign = 'right';
-      } else {
-        ctx.stroke();
-      }
-      ctx.fillText(item.val, x + colW, y);
-    } else {
-      ctx.fillText(item.val, x + colW, y);
-    }
-
-    ctx.strokeStyle = '#e3e6ec';
-    ctx.lineWidth = 1;
+  let ry = summaryTop + 18;
+  const tableW = 692;
+  const keyColW = 190;
+  resumeSections.forEach((sec) => {
+    ctx.strokeStyle = '#1c2434';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(x, y + 12);
-    ctx.lineTo(x + colW, y + 12);
+    ctx.moveTo(64, ry);
+    ctx.lineTo(64 + tableW, ry);
     ctx.stroke();
+
+    ctx.fillStyle = '#eef1f6';
+    ctx.fillRect(64, ry + 1, tableW, 30);
+    ctx.fillStyle = '#1c2434';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(sec.title, 76, ry + 20);
+    ry += 31;
+
+    sec.items.forEach((item) => {
+      ctx.fillStyle = '#f8f9fb';
+      ctx.fillRect(64, ry, keyColW, 36);
+
+      ctx.strokeStyle = '#e3e6ec';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(64 + keyColW, ry);
+      ctx.lineTo(64 + keyColW, ry + 36);
+      ctx.moveTo(64, ry + 36);
+      ctx.lineTo(64 + tableW, ry + 36);
+      ctx.stroke();
+
+      ctx.fillStyle = '#5f6673';
+      ctx.font = '700 13px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(item.key, 76, ry + 22);
+
+      const valX = 64 + keyColW + 14;
+      ctx.fillStyle = '#181c23';
+      ctx.font = '600 13px sans-serif';
+      if (item.checkbox) {
+        ctx.strokeStyle = item.checked ? '#1c2434' : '#9aa1ae';
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, valX, ry + 10, 15, 15, 3);
+        if (item.checked) {
+          ctx.fillStyle = '#1c2434';
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('✓', valX + 7.5, ry + 22);
+          ctx.fillStyle = '#181c23';
+          ctx.font = '600 13px sans-serif';
+          ctx.textAlign = 'left';
+        } else {
+          ctx.stroke();
+        }
+        ctx.fillText(item.val, valX + 23, ry + 22);
+      } else {
+        ctx.fillText(item.val, valX, ry + 22);
+      }
+
+      ry += 36;
+    });
+
+    ry += 14;
   });
 
   ctx.textAlign = 'left';
